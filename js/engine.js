@@ -279,7 +279,7 @@ var GameEngine = (function () {
             +'  <span class="play-area__stage">Tahap '+n+'/'+tot+' \u2014 '+stageData.title+'</span>'
             +'  <span class="play-area__moves">Langkah: <strong id="moveCount">0 / '+stageData.answerKey.length+'</strong></span>'
             +'</div>'
-            +'<div class="play-area__hint"><span>\uD83D\uDCA1</span> '+stageData.hint+'</div>'
+            +''
             +gridHTML()
             +'<div class="play-area__actions">'
             +'  <button class="btn btn--reset-stage" id="btnUlangi">\uD83D\uDD04 ULANGI</button>'
@@ -318,7 +318,7 @@ var GameEngine = (function () {
             +'<div class="feedback-overlay__card">'
             +'  <div class="feedback-overlay__icon">\uD83D\uDE0A</div>'
             +'  <h3 class="feedback-overlay__title">Coba lagi ya!</h3>'
-            +'  <p class="feedback-overlay__text">\uD83D\uDCA1 '+stageData.hint+'</p>'
+            +'  <p class="feedback-overlay__text">Tidak apa-apa, coba lagi ya!</p>'
             +'  <button class="btn btn--play btn--play-yellow" id="btnRetry">Ulangi \u2794</button>'
             +'</div></div>');
         canvasEl.querySelector('#btnRetry').addEventListener('click', resetGrid);
