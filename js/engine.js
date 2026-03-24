@@ -282,14 +282,72 @@ var GameEngine = (function () {
             +''
             +gridHTML()
             +'<div class="play-area__actions">'
-            +'  <button class="btn btn--reset-stage" id="btnUlangi">\uD83D\uDD04 ULANGI</button>'
+            +'  <button class="btn btn--undo" id="btnUndo">\u21A9\uFE0F Mundur 1</button>'
+            +'  <button class="btn btn--reset-stage" id="btnUlangi">\uD83D\uDD04 Ulangi Semua</button>'
             +'</div>'
             +'</div>';
 
         gridEl = canvasEl.querySelector('#eGrid');
         initDrag();
+        canvasEl.querySelector('#btnUndo').addEventListener('click', undoStep);
         canvasEl.querySelector('#btnUlangi').addEventListener('click', resetGrid);
         if(onStageUpdate) onStageUpdate(stageIdx, tot);
+    }
+
+    function undoStep() {
+        if(moveHistory.length === 0) return;
+
+        // Remove overlay if present (e.g. wrong move feedback)
+        var ov = canvasEl.querySelector('#feedbackOverlay');
+        if(ov) ov.remove();
+        isPlaying = true;
+
+        // Remove robot from current pos
+        var cur = slotEl(robotPos.row, robotPos.col);
+        if(cur) {
+            cur.classList.remove('slot--robot','slot--wrong');
+            cur.querySelector('.slot__label').textContent = '';
+            // Restore goal emoji if this was the goal
+            var g = goalPos();
+            if(g && robotPos.row===g.row && robotPos.col===g.col) {
+                cur.querySelector('.slot__label').textContent = stageData.goalEmoji;
+            }
+        }
+
+        // Pop last move
+        moveHistory.pop();
+
+        // Find previous position by replaying from start
+        var r = stageData.startPos.row, c = stageData.startPos.col;
+        for(var i=0; i<moveHistory.length; i++) {
+            switch(moveHistory[i]) {
+                case 'up': r--; break; case 'down': r++; break;
+                case 'left': c--; break; case 'right': c++; break;
+            }
+        }
+        robotPos = {row:r, col:c};
+
+        // Remove visited class from the undone cell (previous robot pos)
+        // The cell we just moved back FROM is the one after robotPos
+        // We need to clear the last visited marker
+        var allVisited = gridEl.querySelectorAll('.slot--visited');
+        if(allVisited.length > 0) {
+            var lastVisited = allVisited[allVisited.length-1];
+            lastVisited.classList.remove('slot--visited');
+            lastVisited.querySelector('.slot__label').textContent = '';
+        }
+
+        // Place robot at previous position
+        var ns = slotEl(r,c);
+        if(ns) {
+            ns.classList.remove('slot--visited');
+            ns.classList.add('slot--robot');
+            ns.querySelector('.slot__label').textContent = cfg.robotEmoji;
+        }
+
+        // Update counter
+        var ctr = canvasEl.querySelector('#moveCount');
+        if(ctr) ctr.textContent = moveHistory.length+' / '+stageData.answerKey.length;
     }
 
     function resetGrid() {
