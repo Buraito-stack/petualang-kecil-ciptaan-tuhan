@@ -137,7 +137,18 @@
                 Yuk kita belajar tentang ciptaan Tuhan yang luar biasa!
             </div>
 
-            <button class="btn btn--start" id="btnStart">
+            <!-- First-time registration (tengah, hilang setelah daftar) -->
+            <div class="first-register" id="firstRegister">
+                <h3 class="first-register__title">Siapa namamu, petualang?</h3>
+                <div class="first-register__row">
+                    <input type="text" class="first-register__input" id="inputNameFirst"
+                           placeholder="Tulis nama kamu..." maxlength="20" autocomplete="off">
+                    <button class="btn btn--add-profile" id="btnFirstRegister">Mulai! &#10132;</button>
+                </div>
+            </div>
+
+            <!-- Tombol start (muncul setelah ada profil) -->
+            <button class="btn btn--start" id="btnStart" style="display:none">
                 Mulai Petualangan <span class="btn__arrow">&#10132;</span>
             </button>
         </div>
@@ -280,6 +291,29 @@
         </div>
     </section>
 
+
+    <!-- Profile button (kanan atas) -->
+    <button class="profile-btn" id="profileBtn" style="display:none">
+        <span class="profile-btn__avatar">&#129490;</span>
+        <span class="profile-btn__name" id="profileBtnName"></span>
+    </button>
+
+    <!-- Profile popup -->
+    <div class="profile-popup-overlay" id="profilePopup">
+        <div class="profile-popup">
+            <button class="profile-popup__close" id="profilePopupClose">&#10005;</button>
+            <h3 class="profile-popup__title">Ganti Petualang</h3>
+            <div class="profile-popup__list" id="profilePopupList"></div>
+            <div class="profile-popup__new" id="profilePopupNew">
+                <input type="text" class="profile-popup__input" id="inputNamePopup"
+                       placeholder="Nama baru..." maxlength="20" autocomplete="off">
+                <button class="btn btn--add-profile btn--add-small" id="btnAddPopup">&#10133;</button>
+            </div>
+            <p class="profile-popup__full" id="profilePopupFull" style="display:none">
+                Daftar penuh (maks 10)
+            </p>
+        </div>
+    </div>
 
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>

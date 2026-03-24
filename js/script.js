@@ -54,14 +54,31 @@
 
     var toastEl = $('#toast');
 
-    var activeLevel = null; // level yang sedang dipilih
+    // Profile UI — first register
+    var firstRegister   = $('#firstRegister');
+    var inputNameFirst  = $('#inputNameFirst');
+    var btnFirstReg     = $('#btnFirstRegister');
+
+    // Profile UI — top-right button + popup
+    var profileBtn      = $('#profileBtn');
+    var profileBtnName  = $('#profileBtnName');
+    var profilePopup    = $('#profilePopup');
+    var profilePopupClose = $('#profilePopupClose');
+    var profilePopupList  = $('#profilePopupList');
+    var profilePopupNew   = $('#profilePopupNew');
+    var profilePopupFull  = $('#profilePopupFull');
+    var inputNamePopup    = $('#inputNamePopup');
+    var btnAddPopup       = $('#btnAddPopup');
+
+    var activeLevel = null;
+    var MAX_PROFILES = 10;
+    var PROFILES_KEY = 'petualang_profiles';
 
 
     /* ═══════════════════════════
-       STORAGE — per-stage progress
+       PROFILES — Multi-user LocalStorage
        ═══════════════════════════
-       Format: { level1: { stages: [true,false,...] }, level2: { stages: [...] } }
-       Stars = count of trues. Level done = all true.
+       Format: { profiles: [{name:'Andi', progress:{...}}, ...], activeIdx: 0 }
     */
     function defaultProgress() {
         return {
@@ -70,23 +87,57 @@
         };
     }
 
-    function getProgress() {
+    function loadProfiles() {
         try {
-            var raw = localStorage.getItem(cfg.storageKey);
+            var raw = localStorage.getItem(PROFILES_KEY);
             if (raw) {
                 var d = JSON.parse(raw);
-                // Migrate old format {completed,stars} → new {stages:[...]}
-                if (d.level1 && !d.level1.stages) {
-                    localStorage.removeItem(cfg.storageKey);
-                    return defaultProgress();
-                }
-                return d;
+                if (d && Array.isArray(d.profiles)) return d;
             }
         } catch(_){}
-        return defaultProgress();
+
+        // Migrate old single-user data if exists
+        var oldData = null;
+        try {
+            var oldRaw = localStorage.getItem(cfg.storageKey);
+            if (oldRaw) {
+                var parsed = JSON.parse(oldRaw);
+                if (parsed.level1 && parsed.level1.stages) oldData = parsed;
+                localStorage.removeItem(cfg.storageKey);
+            }
+        } catch(_){}
+
+        if (oldData) {
+            return { profiles: [{ name: 'Petualang', progress: oldData }], activeIdx: 0 };
+        }
+
+        return { profiles: [], activeIdx: -1 };
     }
 
-    function saveProgress(d) { localStorage.setItem(cfg.storageKey, JSON.stringify(d)); }
+    function saveProfiles(data) {
+        localStorage.setItem(PROFILES_KEY, JSON.stringify(data));
+    }
+
+    function getActiveProfile() {
+        var data = loadProfiles();
+        if (data.activeIdx >= 0 && data.activeIdx < data.profiles.length) {
+            return data.profiles[data.activeIdx];
+        }
+        return null;
+    }
+
+    function getProgress() {
+        var p = getActiveProfile();
+        return p ? p.progress : defaultProgress();
+    }
+
+    function saveProgress(prog) {
+        var data = loadProfiles();
+        if (data.activeIdx >= 0 && data.activeIdx < data.profiles.length) {
+            data.profiles[data.activeIdx].progress = prog;
+            saveProfiles(data);
+        }
+    }
 
     function getStars(prog, key) {
         var n=0; for(var i=0;i<prog[key].stages.length;i++) if(prog[key].stages[i]) n++;
@@ -96,6 +147,141 @@
     function isLevelDone(prog, key) {
         for(var i=0;i<prog[key].stages.length;i++) if(!prog[key].stages[i]) return false;
         return true;
+    }
+
+
+    /* ═══════════════════════════
+       PROFILE UI
+       ═══════════════════════════
+       - Pertama kali: form tengah (firstRegister)
+       - Sudah ada profil: tombol kanan atas (profileBtn)
+       - Ganti/tambah profil: popup (profilePopup)
+    */
+    function escHTML(s) {
+        var d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+    }
+
+    function addNewProfile(name) {
+        name = (name || '').trim();
+        if (!name) return false;
+        if (name.length > 20) name = name.substring(0, 20);
+        var data = loadProfiles();
+        for (var i = 0; i < data.profiles.length; i++) {
+            if (data.profiles[i].name.toLowerCase() === name.toLowerCase()) {
+                showToast('Nama sudah ada!'); return false;
+            }
+        }
+        if (data.profiles.length >= MAX_PROFILES) {
+            showToast('Daftar petualang penuh!'); return false;
+        }
+        data.profiles.push({ name: name, progress: defaultProgress() });
+        data.activeIdx = data.profiles.length - 1;
+        saveProfiles(data);
+        return true;
+    }
+
+    function selectProfile(idx) {
+        var data = loadProfiles();
+        data.activeIdx = idx;
+        saveProfiles(data);
+        syncProfileUI();
+        refreshUI();
+        closePopup();
+        showToast('Halo, ' + data.profiles[idx].name + '!');
+    }
+
+    /** Sync semua UI profil berdasarkan state */
+    function syncProfileUI() {
+        var data = loadProfiles();
+        var hasProfiles = data.profiles.length > 0;
+        var hasActive = data.activeIdx >= 0 && data.activeIdx < data.profiles.length;
+
+        // First register: tampil hanya kalau belum ada profil sama sekali
+        firstRegister.style.display = hasProfiles ? 'none' : '';
+
+        // Start button: tampil kalau sudah ada profil aktif
+        btnStart.style.display = hasActive ? '' : 'none';
+
+        // Profile button kanan atas: tampil kalau ada profil
+        profileBtn.style.display = hasProfiles ? '' : 'none';
+        if (hasActive) {
+            profileBtnName.textContent = data.profiles[data.activeIdx].name;
+        }
+    }
+
+    function deleteProfile(idx) {
+        var data = loadProfiles();
+        var name = data.profiles[idx].name;
+        if (!confirm('Hapus profil "' + name + '" dan semua progressnya?')) return;
+
+        data.profiles.splice(idx, 1);
+
+        // Fix activeIdx
+        if (data.profiles.length === 0) {
+            data.activeIdx = -1;
+        } else if (idx === data.activeIdx) {
+            data.activeIdx = 0;
+        } else if (idx < data.activeIdx) {
+            data.activeIdx--;
+        }
+
+        saveProfiles(data);
+        syncProfileUI();
+        refreshUI();
+        renderPopupList();
+        showToast('"' + name + '" dihapus');
+    }
+
+    function renderPopupList() {
+        var data = loadProfiles();
+        var profiles = data.profiles;
+        profilePopupList.innerHTML = '';
+
+        for (var i = 0; i < profiles.length; i++) {
+            var p = profiles[i];
+            var stars = getStars(p.progress, 'level1') + getStars(p.progress, 'level2');
+            var isActive = (i === data.activeIdx);
+
+            var row = document.createElement('div');
+            row.className = 'profile-row';
+
+            var el = document.createElement('button');
+            el.className = 'profile-item' + (isActive ? ' profile-item--active' : '');
+            el.innerHTML =
+                '<span class="profile-item__avatar">\uD83E\uDDD2</span>'
+                + '<span class="profile-item__info">'
+                + '<strong class="profile-item__name">' + escHTML(p.name) + '</strong>'
+                + '<span class="profile-item__stars">\u2B50 ' + stars + '/10</span>'
+                + '</span>';
+            el.addEventListener('click', (function(idx){ return function(){ selectProfile(idx); }; })(i));
+
+            var del = document.createElement('button');
+            del.className = 'profile-del';
+            del.innerHTML = '\uD83D\uDDD1';
+            del.title = 'Hapus ' + p.name;
+            del.addEventListener('click', (function(idx){ return function(e){ e.stopPropagation(); deleteProfile(idx); }; })(i));
+
+            row.appendChild(el);
+            row.appendChild(del);
+            profilePopupList.appendChild(row);
+        }
+
+        if (profiles.length >= MAX_PROFILES) {
+            profilePopupNew.style.display = 'none';
+            profilePopupFull.style.display = '';
+        } else {
+            profilePopupNew.style.display = '';
+            profilePopupFull.style.display = 'none';
+        }
+    }
+
+    function openPopup() {
+        renderPopupList();
+        profilePopup.classList.add('is-active');
+    }
+
+    function closePopup() {
+        profilePopup.classList.remove('is-active');
     }
 
 
@@ -324,16 +510,44 @@
     }
 
     function resetProgress() {
-        if(!confirm('Yakin hapus semua progress?')) return;
-        localStorage.removeItem(cfg.storageKey);
+        var p = getActiveProfile();
+        if(!p) return;
+        if(!confirm('Yakin hapus progress ' + p.name + '?')) return;
+        var data = loadProfiles();
+        data.profiles[data.activeIdx].progress = defaultProgress();
+        saveProfiles(data);
         refreshUI();
-        showToast('Progress direset!');
+        showToast('Progress ' + p.name + ' direset!');
     }
 
 
     /* ═══════════════════════════
        EVENTS
        ═══════════════════════════ */
+    // First register
+    btnFirstReg.addEventListener('click', function(){
+        if(addNewProfile(inputNameFirst.value)) { syncProfileUI(); refreshUI(); }
+    });
+    inputNameFirst.addEventListener('keydown', function(e){
+        if(e.key==='Enter'&&addNewProfile(inputNameFirst.value)){ syncProfileUI(); refreshUI(); }
+    });
+
+    // Profile button + popup
+    profileBtn.addEventListener('click', openPopup);
+    profilePopupClose.addEventListener('click', closePopup);
+    profilePopup.addEventListener('click', function(e){ if(e.target===profilePopup) closePopup(); });
+    btnAddPopup.addEventListener('click', function(){
+        if(addNewProfile(inputNamePopup.value)){
+            inputNamePopup.value=''; syncProfileUI(); refreshUI(); renderPopupList();
+        }
+    });
+    inputNamePopup.addEventListener('keydown', function(e){
+        if(e.key==='Enter'&&addNewProfile(inputNamePopup.value)){
+            inputNamePopup.value=''; syncProfileUI(); refreshUI(); renderPopupList();
+        }
+    });
+
+    // Navigation
     btnStart.addEventListener('click', goToLevels);
     btnBack.addEventListener('click', goToOpening);
     btnBackToLevels2.addEventListener('click', goToLevels);
@@ -361,6 +575,7 @@
     /* ═══════════════════════════
        INIT
        ═══════════════════════════ */
+    syncProfileUI();
     refreshUI();
     cycleSpeech();
 
