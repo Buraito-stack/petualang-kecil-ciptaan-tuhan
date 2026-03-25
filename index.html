@@ -151,8 +151,91 @@
             <button class="btn btn--start" id="btnStart" style="display:none">
                 Mulai Petualangan <span class="btn__arrow">&#10132;</span>
             </button>
+            <button class="btn btn--guide" id="btnGuideOpen">&#10068; Cara Bermain</button>
         </div>
     </section>
+
+    <!-- =========================================
+         POPUP — PETUNJUK PENGGUNAAN
+         ========================================= -->
+    <div class="guide-overlay" id="guideOverlay">
+        <div class="guide">
+            <button class="guide__close" id="guideClose">&#10005;</button>
+            <h2 class="guide__title">&#128214; Petunjuk Penggunaan</h2>
+
+            <div class="guide__section">
+                <h3 class="guide__subtitle">&#127918; Cara Bermain</h3>
+                <ul class="guide__list">
+                    <li>
+                        <span class="guide__icon">&#11088;</span>
+                        <span>Pilih <strong>Level</strong>, lalu pilih <strong>Tahap</strong> yang terbuka</span>
+                    </li>
+                    <li>
+                        <span class="guide__icon">&#128214;</span>
+                        <span>Baca <strong>cerita</strong> dan dengarkan audio, lalu tekan <strong>Siap!</strong></span>
+                    </li>
+                    <li>
+                        <span class="guide__icon">&#127912;</span>
+                        <span>Lihat <strong>jalur terang</strong> di peta &mdash; itulah jalan yang harus diikuti</span>
+                    </li>
+                    <li>
+                        <span class="guide__icon">&#11015;&#65039;</span>
+                        <span><strong>Tarik panah</strong> (&#11014;&#65039;&#11015;&#65039;&#11013;&#65039;&#10145;&#65039;) ke arah peta untuk menggerakkan robot</span>
+                    </li>
+                    <li>
+                        <span class="guide__icon">&#129302;</span>
+                        <span>Robot akan <strong>bergerak</strong> sesuai arah panah yang kamu tarik</span>
+                    </li>
+                    <li>
+                        <span class="guide__icon">&#127775;</span>
+                        <span>Sampai di tujuan? <strong>Yeay!</strong> Kamu dapat &#11088; 1 bintang!</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="guide__section">
+                <h3 class="guide__subtitle">&#128377;&#65039; Tombol</h3>
+                <ul class="guide__list">
+                    <li>
+                        <span class="guide__badge guide__badge--yellow">&#8617;&#65039; Mundur 1</span>
+                        <span>Batalkan 1 langkah terakhir</span>
+                    </li>
+                    <li>
+                        <span class="guide__badge guide__badge--gray">&#128260; Ulangi</span>
+                        <span>Mulai ulang dari awal</span>
+                    </li>
+                    <li>
+                        <span class="guide__badge guide__badge--music">&#127925;</span>
+                        <span>Nyalakan / matikan musik</span>
+                    </li>
+                    <li>
+                        <span class="guide__badge guide__badge--profile">&#129490;</span>
+                        <span>Ganti atau tambah pemain</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="guide__section">
+                <h3 class="guide__subtitle">&#128161; Tips</h3>
+                <ul class="guide__list">
+                    <li>
+                        <span class="guide__icon">&#128998;</span>
+                        <span>Kotak <strong>hijau terang</strong> = jalan yang bisa dilewati</span>
+                    </li>
+                    <li>
+                        <span class="guide__icon">&#11036;</span>
+                        <span>Kotak <strong>gelap</strong> = tembok, tidak bisa dilewati</span>
+                    </li>
+                    <li>
+                        <span class="guide__icon">&#127774;</span>
+                        <span>Kotak <strong>kuning berkilau</strong> = benda yang harus dikunjungi</span>
+                    </li>
+                </ul>
+            </div>
+
+            <button class="btn btn--play btn--play-yellow guide__ok" id="guideOk">Mengerti! &#10132;</button>
+        </div>
+    </div>
 
 
     <!-- =========================================
@@ -291,6 +374,12 @@
         </div>
     </section>
 
+
+    <!-- BGM audio + toggle button (kiri atas) -->
+    <audio id="bgmAudio" src="assets/bgm 1.mpeg" loop preload="auto"></audio>
+    <button class="bgm-btn" id="bgmBtn" title="Musik On/Off">
+        <span class="bgm-btn__icon" id="bgmIcon">&#127925;</span>
+    </button>
 
     <!-- Profile button (kanan atas) -->
     <button class="profile-btn" id="profileBtn" style="display:none">

@@ -112,6 +112,11 @@ var GameConfig = (function () {
                 startPos: { row: 4, col: 0 },
                 answerKey: ['right','up','up','right','right','up','up','right','right','down','down','down'],
                 audio: 'level1_final.mp3',
+                checkpoints: [
+                    { row: 2, col: 1, emoji: '\u2600\uFE0F' },
+                    { row: 0, col: 3, emoji: '\uD83C\uDF19' },
+                    { row: 0, col: 5, emoji: '\u2B50' },
+                ],
             },
         ],
     };
@@ -198,6 +203,11 @@ var GameConfig = (function () {
                 startPos: { row: 0, col: 0 },
                 answerKey: ['down','down','right','right','down','down','right','right','up','up','right','up'],
                 audio: 'level2_final.mp3',
+                checkpoints: [
+                    { row: 2, col: 0, emoji: '\uD83D\uDCA7' },
+                    { row: 4, col: 2, emoji: '\uD83C\uDFDE\uFE0F' },
+                    { row: 2, col: 4, emoji: '\uD83C\uDF0A' },
+                ],
             },
         ],
     };

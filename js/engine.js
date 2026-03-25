@@ -28,10 +28,19 @@ var GameEngine = (function () {
     var onStageUpdate   = null;
 
     // Drag
-    var isDragging  = false;
-    var dragGhost   = null;
-    var dragOffX    = 0;
-    var dragOffY    = 0;
+    var isDragging = false;
+    var dragDir    = null;
+    var dragGhost  = null;
+    var dragMoved  = false;
+    var dragStartX = 0;
+    var dragStartY = 0;
+    var DRAG_THRESH = 10;
+    var ARROWS = {
+        up:    { emoji: '\u2B06\uFE0F', label: 'Atas' },
+        down:  { emoji: '\u2B07\uFE0F', label: 'Bawah' },
+        left:  { emoji: '\u2B05\uFE0F', label: 'Kiri' },
+        right: { emoji: '\u27A1\uFE0F', label: 'Kanan' },
+    };
 
 
     /* ═══════════════════════════
@@ -67,6 +76,15 @@ var GameEngine = (function () {
     /* ═══════════════════════════
        GRID HTML
        ═══════════════════════════ */
+    function getCheckpointEmoji(r, c) {
+        if (!stageData.checkpoints) return null;
+        for (var i = 0; i < stageData.checkpoints.length; i++) {
+            var cp = stageData.checkpoints[i];
+            if (cp.row === r && cp.col === c) return cp.emoji;
+        }
+        return null;
+    }
+
     function gridHTML() {
         buildPath();
         var cols = stageData.gridCols, rows = stageData.gridRows, g = goalPos();
@@ -76,9 +94,20 @@ var GameEngine = (function () {
                 var isS = (r===stageData.startPos.row && c===stageData.startPos.col);
                 var isG = (g && r===g.row && c===g.col);
                 var onP = pathCells[r+','+c];
-                var cls = 'slot' + (onP?' slot--path':' slot--wall') + (isS?' slot--start slot--robot':'') + (isG?' slot--goal':'');
-                var lbl = isS ? cfg.robotEmoji : isG ? stageData.goalEmoji : '';
-                h += '<div class="'+cls+'" data-row="'+r+'" data-col="'+c+'"><span class="slot__label">'+lbl+'</span></div>';
+                var cpEmoji = getCheckpointEmoji(r, c);
+                var isCp = !!cpEmoji;
+
+                var cls = 'slot'
+                    + (onP ? ' slot--path' : ' slot--wall')
+                    + (isS ? ' slot--start slot--robot' : '')
+                    + (isG ? ' slot--goal' : '')
+                    + (isCp ? ' slot--checkpoint' : '');
+
+                var lbl = isS ? cfg.robotEmoji : isG ? stageData.goalEmoji : (cpEmoji || '');
+
+                h += '<div class="'+cls+'" data-row="'+r+'" data-col="'+c+'"'
+                   + (cpEmoji ? ' data-cp="'+cpEmoji+'"' : '')
+                   + '><span class="slot__label">'+lbl+'</span></div>';
             }
         }
         return h+'</div>';
@@ -88,8 +117,25 @@ var GameEngine = (function () {
 
 
     /* ═══════════════════════════
-       DRAG ROBOT ON GRID
-       ═══════════════════════════ */
+       DRAG ARROW → GRID
+       ═══════════════════════════
+       Drag panah dari toolbar ke area grid.
+       Drop di grid = robot bergerak ke arah panah.
+       Klik tanpa drag = diabaikan.
+    */
+    function arrowToolbarHTML() {
+        var dirs = ['left','up','down','right'];
+        var h = '<div class="arrow-toolbar" id="arrowToolbar"><div class="arrow-toolbar__row">';
+        for (var i = 0; i < dirs.length; i++) {
+            var d = dirs[i];
+            h += '<div class="arrow-btn" data-dir="'+d+'">'
+               + '<span class="arrow-btn__emoji">'+ARROWS[d].emoji+'</span>'
+               + '<span class="arrow-btn__label">'+ARROWS[d].label+'</span>'
+               + '</div>';
+        }
+        return h + '</div></div>';
+    }
+
     function initDrag() {
         canvasEl.addEventListener('mousedown', onDown);
         document.addEventListener('mousemove', onMove);
@@ -110,58 +156,100 @@ var GameEngine = (function () {
 
     function onDown(e) {
         if(!isPlaying) return;
-        var t = findUp(e.target,'slot--robot');
-        if(!t) return;
+        var btn = findUp(e.target, 'arrow-btn');
+        if(!btn) return;
         e.preventDefault();
         isDragging = true;
+        dragMoved = false;
+        dragDir = btn.dataset.dir;
         var pt = e.touches?e.touches[0]:e;
-        var rect = t.getBoundingClientRect();
-        dragOffX = pt.clientX - rect.left;
-        dragOffY = pt.clientY - rect.top;
-        dragGhost = document.createElement('div');
-        dragGhost.className = 'drag-ghost';
-        dragGhost.textContent = cfg.robotEmoji;
-        dragGhost.style.width = rect.width+'px';
-        dragGhost.style.height = rect.height+'px';
-        dragGhost.style.left = rect.left+'px';
-        dragGhost.style.top = rect.top+'px';
-        document.body.appendChild(dragGhost);
-        t.classList.add('slot--dragging');
+        dragStartX = pt.clientX;
+        dragStartY = pt.clientY;
     }
 
     function onMove(e) {
-        if(!isDragging||!dragGhost) return;
+        if(!isDragging) return;
         e.preventDefault();
         var pt = e.touches?e.touches[0]:e;
-        dragGhost.style.left = (pt.clientX-dragOffX)+'px';
-        dragGhost.style.top = (pt.clientY-dragOffY)+'px';
-        // Highlight valid adjacent path slot
-        clearHL();
-        var s = slotAtPt(pt.clientX, pt.clientY);
-        if(s && isAdj(s) && s.classList.contains('slot--path') && !s.classList.contains('slot--visited')) {
-            s.classList.add('slot--highlight');
+
+        // Harus geser minimal DRAG_THRESH px baru dianggap drag
+        if(!dragMoved) {
+            if(Math.hypot(pt.clientX-dragStartX, pt.clientY-dragStartY) < DRAG_THRESH) return;
+            dragMoved = true;
+            // Buat ghost
+            dragGhost = document.createElement('div');
+            dragGhost.className = 'drag-ghost';
+            dragGhost.textContent = ARROWS[dragDir].emoji;
+            dragGhost.style.left = (pt.clientX-30)+'px';
+            dragGhost.style.top = (pt.clientY-30)+'px';
+            document.body.appendChild(dragGhost);
         }
+
+        if(dragGhost) {
+            dragGhost.style.left = (pt.clientX-30)+'px';
+            dragGhost.style.top = (pt.clientY-30)+'px';
+        }
+
+        // Highlight cell tujuan dari arah ini
+        clearHL();
+        var dest = getDestCell(dragDir);
+        if(dest) dest.classList.add('slot--highlight');
     }
 
     function onUp(e) {
         if(!isDragging) return;
         isDragging = false;
-        var pt = e.changedTouches?e.changedTouches[0]:e;
+
+        // KLIK tanpa drag = abaikan
+        if(!dragMoved) { dragDir = null; return; }
+
         if(dragGhost){dragGhost.remove();dragGhost=null;}
-        var dr = canvasEl.querySelector('.slot--dragging');
-        if(dr) dr.classList.remove('slot--dragging');
         clearHL();
 
-        var target = slotAtPt(pt.clientX, pt.clientY);
-        if(target && isAdj(target) && target.classList.contains('slot--path') && !target.classList.contains('slot--visited')) {
-            var nr = +target.dataset.row, nc = +target.dataset.col;
-            var dir = getDir(robotPos, {row:nr,col:nc});
-            if(dir) {
-                moveHistory.push(dir);
-                snapTo(nr,nc);
-                checkDone();
-            }
+        // Cek apakah drop di area grid
+        var pt = e.changedTouches?e.changedTouches[0]:e;
+        var overGrid = isOverGrid(pt.clientX, pt.clientY);
+
+        if(overGrid && dragDir) {
+            tryMove(dragDir);
         }
+        dragDir = null;
+    }
+
+    /** Hitung cell tujuan jika robot bergerak ke arah dir */
+    function getDestCell(dir) {
+        if(!robotPos || !gridEl) return null;
+        var r = robotPos.row, c = robotPos.col;
+        switch(dir) {
+            case 'up': r--; break; case 'down': r++; break;
+            case 'left': c--; break; case 'right': c++; break;
+        }
+        var el = slotEl(r,c);
+        if(el && el.classList.contains('slot--path') && !el.classList.contains('slot--visited')) return el;
+        return null;
+    }
+
+    /** Coba gerakkan robot ke arah dir */
+    function tryMove(dir) {
+        var dest = getDestCell(dir);
+        if(!dest) {
+            // Arah salah — shake grid
+            gridEl.classList.add('grid--shake');
+            setTimeout(function(){gridEl.classList.remove('grid--shake');},400);
+            return;
+        }
+        var nr = +dest.dataset.row, nc = +dest.dataset.col;
+        moveHistory.push(dir);
+        snapTo(nr, nc);
+        checkDone();
+    }
+
+    function isOverGrid(x, y) {
+        var els = document.elementsFromPoint(x, y);
+        for(var i=0;i<els.length;i++) {
+            if(els[i].id === 'eGrid' || (els[i].classList && els[i].classList.contains('slot'))) return true;
+        }
+        return false;
     }
 
     function clearHL() {
@@ -169,21 +257,7 @@ var GameEngine = (function () {
         var h=gridEl.querySelectorAll('.slot--highlight');
         for(var i=0;i<h.length;i++) h[i].classList.remove('slot--highlight');
     }
-    function slotAtPt(x,y) {
-        var els=document.elementsFromPoint(x,y);
-        for(var i=0;i<els.length;i++) if(els[i].classList&&els[i].classList.contains('slot'))return els[i];
-        return null;
-    }
-    function isAdj(el) {
-        if(!robotPos)return false;
-        return (Math.abs(+el.dataset.row-robotPos.row)+Math.abs(+el.dataset.col-robotPos.col))===1;
-    }
-    function getDir(a,b) {
-        var dr=b.row-a.row, dc=b.col-a.col;
-        if(dr===-1&&dc===0)return'up'; if(dr===1&&dc===0)return'down';
-        if(dr===0&&dc===-1)return'left'; if(dr===0&&dc===1)return'right';
-        return null;
-    }
+
     function findUp(el,cls) {
         while(el&&el!==document){if(el.classList&&el.classList.contains(cls))return el;el=el.parentElement;}
         return null;
@@ -207,11 +281,81 @@ var GameEngine = (function () {
             ns.querySelector('.slot__label').textContent = cfg.robotEmoji;
             ns.classList.add('slot--snap');
             setTimeout(function(){ns.classList.remove('slot--snap');},250);
+
+            // Sound: checkpoint > goal > langkah biasa
+            if(ns.dataset.cp) {
+                ns.classList.add('slot--checkpoint-hit');
+                playSound('checkpoint');
+                showCheckpointToast(ns.dataset.cp);
+            } else if(ns.classList.contains('slot--goal')) {
+                playSound('goal');
+            } else {
+                playSound('step');
+            }
         }
-        // Update counter
         var ctr = canvasEl.querySelector('#moveCount');
         if(ctr) ctr.textContent = moveHistory.length+' / '+stageData.answerKey.length;
+        updateMoveLog();
         if(onStageUpdate) onStageUpdate(stageIdx, GameConfig.getStageCount(currentLevel));
+    }
+
+    /** Update visual log deretan panah */
+    function updateMoveLog() {
+        var el = canvasEl.querySelector('#moveLog');
+        if(!el) return;
+        if(moveHistory.length === 0) { el.innerHTML = ''; return; }
+        var h = '';
+        for(var i=0; i<moveHistory.length; i++) {
+            h += '<span class="move-log__step'+(i===moveHistory.length-1?' move-log__step--last':'')+'">'
+               + ARROWS[moveHistory[i]].emoji
+               + '</span>';
+        }
+        el.innerHTML = h;
+    }
+
+    /** Sound effects via Web Audio API (tanpa file mp3) */
+    function playSound(type) {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var t = ctx.currentTime;
+
+            if (type === 'step') {
+                // Tick ringan — 1 nada pendek
+                tone(ctx, 880, 0.06, t, 0.1);
+            } else if (type === 'checkpoint') {
+                // Ding dong — 2 nada naik
+                tone(ctx, 523, 0.15, t, 0.3);
+                tone(ctx, 659, 0.15, t + 0.12, 0.3);
+            } else if (type === 'goal') {
+                // Tada — 3 nada naik meriah
+                tone(ctx, 523, 0.15, t, 0.35);
+                tone(ctx, 659, 0.15, t + 0.1, 0.35);
+                tone(ctx, 784, 0.18, t + 0.2, 0.5);
+            }
+        } catch(e) {}
+    }
+
+    function tone(ctx, freq, vol, start, dur) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.value = vol;
+        gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + dur);
+    }
+
+    /** Mini toast di atas grid saat checkpoint */
+    function showCheckpointToast(emoji) {
+        var el = document.createElement('div');
+        el.className = 'checkpoint-toast';
+        el.textContent = emoji + ' Ketemu!';
+        canvasEl.appendChild(el);
+        setTimeout(function(){ el.classList.add('is-visible'); }, 10);
+        setTimeout(function(){ el.remove(); }, 1500);
     }
 
 
@@ -281,6 +425,8 @@ var GameEngine = (function () {
             +'</div>'
             +''
             +gridHTML()
+            +'<div class="move-log" id="moveLog"></div>'
+            +arrowToolbarHTML()
             +'<div class="play-area__actions">'
             +'  <button class="btn btn--undo" id="btnUndo">\u21A9\uFE0F Mundur 1</button>'
             +'  <button class="btn btn--reset-stage" id="btnUlangi">\uD83D\uDD04 Ulangi Semua</button>'
@@ -345,9 +491,9 @@ var GameEngine = (function () {
             ns.querySelector('.slot__label').textContent = cfg.robotEmoji;
         }
 
-        // Update counter
         var ctr = canvasEl.querySelector('#moveCount');
         if(ctr) ctr.textContent = moveHistory.length+' / '+stageData.answerKey.length;
+        updateMoveLog();
     }
 
     function resetGrid() {
@@ -360,6 +506,7 @@ var GameEngine = (function () {
         robotPos = {row:stageData.startPos.row,col:stageData.startPos.col};
         var ctr = canvasEl.querySelector('#moveCount');
         if(ctr) ctr.textContent = '0 / '+stageData.answerKey.length;
+        updateMoveLog();
         var ov = canvasEl.querySelector('#feedbackOverlay');
         if(ov) ov.remove();
     }

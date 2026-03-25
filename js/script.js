@@ -174,7 +174,7 @@
         if (data.profiles.length >= MAX_PROFILES) {
             showToast('Daftar petualang penuh!'); return false;
         }
-        data.profiles.push({ name: name, progress: defaultProgress() });
+        data.profiles.push({ name: name, progress: defaultProgress(), guideSeen: false });
         data.activeIdx = data.profiles.length - 1;
         saveProfiles(data);
         return true;
@@ -196,16 +196,20 @@
         var hasProfiles = data.profiles.length > 0;
         var hasActive = data.activeIdx >= 0 && data.activeIdx < data.profiles.length;
 
-        // First register: tampil hanya kalau belum ada profil sama sekali
         firstRegister.style.display = hasProfiles ? 'none' : '';
-
-        // Start button: tampil kalau sudah ada profil aktif
         btnStart.style.display = hasActive ? '' : 'none';
-
-        // Profile button kanan atas: tampil kalau ada profil
         profileBtn.style.display = hasProfiles ? '' : 'none';
+
         if (hasActive) {
-            profileBtnName.textContent = data.profiles[data.activeIdx].name;
+            var p = data.profiles[data.activeIdx];
+            profileBtnName.textContent = p.name;
+
+            // Auto buka petunjuk kalau profil ini belum pernah lihat
+            if (!p.guideSeen) {
+                setTimeout(function(){ guideOverlay.classList.add('is-active'); }, 400);
+                p.guideSeen = true;
+                saveProfiles(data);
+            }
         }
     }
 
@@ -509,6 +513,52 @@
         setTimeout(function(){toastEl.classList.remove('is-visible');},3000);
     }
 
+    /* ═══════════════════════════
+       BGM — Background Music
+       ═══════════════════════════ */
+    var bgmAudio = $('#bgmAudio');
+    var bgmBtn   = $('#bgmBtn');
+    var bgmIcon  = $('#bgmIcon');
+    var bgmOn    = true;
+    var BGM_KEY  = 'petualang_bgm';
+
+    // Restore preference — default ON, off hanya kalau user pernah matikan
+    try { if (localStorage.getItem(BGM_KEY) === '0') bgmOn = false; } catch(_){}
+
+    function toggleBgm() {
+        bgmOn = !bgmOn;
+        try { localStorage.setItem(BGM_KEY, bgmOn ? '1' : '0'); } catch(_){}
+        syncBgm();
+    }
+
+    function syncBgm() {
+        if (bgmOn) {
+            bgmAudio.play().catch(function(){});
+            bgmBtn.classList.add('bgm-btn--on');
+            bgmIcon.textContent = '\uD83C\uDFB5';
+        } else {
+            bgmAudio.pause();
+            bgmBtn.classList.remove('bgm-btn--on');
+            bgmIcon.textContent = '\uD83D\uDD07';
+        }
+    }
+
+    bgmBtn.addEventListener('click', toggleBgm);
+    syncBgm();
+
+    // Browser blocks autoplay until user interacts — listen ALL interaction types
+    function tryAutoplay() {
+        if (bgmOn && bgmAudio.paused) bgmAudio.play().catch(function(){});
+        // Cleanup setelah berhasil
+        ['click','touchstart','keydown'].forEach(function(evt){
+            document.removeEventListener(evt, tryAutoplay);
+        });
+    }
+    ['click','touchstart','keydown'].forEach(function(evt){
+        document.addEventListener(evt, tryAutoplay, { once: false });
+    });
+
+
     function resetProgress() {
         var p = getActiveProfile();
         if(!p) return;
@@ -519,6 +569,18 @@
         refreshUI();
         showToast('Progress ' + p.name + ' direset!');
     }
+
+
+    /* ═══════════════════════════
+       GUIDE — Petunjuk Penggunaan
+       ═══════════════════════════ */
+    var guideOverlay = $('#guideOverlay');
+    var btnGuideOpen = $('#btnGuideOpen');
+
+    btnGuideOpen.addEventListener('click', function(){ guideOverlay.classList.add('is-active'); });
+    $('#guideClose').addEventListener('click', function(){ guideOverlay.classList.remove('is-active'); });
+    $('#guideOk').addEventListener('click', function(){ guideOverlay.classList.remove('is-active'); });
+    guideOverlay.addEventListener('click', function(e){ if(e.target===guideOverlay) guideOverlay.classList.remove('is-active'); });
 
 
     /* ═══════════════════════════
