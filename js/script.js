@@ -73,6 +73,20 @@
     var activeLevel = null;
     var MAX_PROFILES = 15;
     var PROFILES_KEY = 'petualang_profiles';
+    var NAV_KEY = 'petualang_nav';
+
+    /** Simpan posisi screen terakhir */
+    function saveNav(screen, level, stageIdx) {
+        try {
+            localStorage.setItem(NAV_KEY, JSON.stringify({s:screen, l:level||null, t:stageIdx||null}));
+        } catch(_){}
+    }
+    function loadNav() {
+        try {
+            var r = localStorage.getItem(NAV_KEY);
+            return r ? JSON.parse(r) : null;
+        } catch(_){ return null; }
+    }
 
 
     /* ═══════════════════════════
@@ -311,18 +325,20 @@
         });
     }
 
-    function goToOpening() { GameEngine.destroy(); navigateTo(screenOpening); }
+    function goToOpening() { GameEngine.destroy(); saveNav('opening'); navigateTo(screenOpening); }
 
     function goToLevels() {
         GameEngine.destroy();
         activeLevel = null;
         refreshUI();
+        saveNav('levels');
         navigateTo(screenLevels);
     }
 
     function goToStages(levelNum) {
         activeLevel = levelNum;
         renderStageSelect(levelNum);
+        saveNav('stages', levelNum);
         navigateTo(screenStages);
     }
 
@@ -333,6 +349,7 @@
         gameProgressFill.style.width = Math.round(((stageIdx)/tot)*100)+'%';
         gameProgressText.textContent = stageIdx+' / '+tot;
 
+        saveNav('game', levelNum, stageIdx);
         navigateTo(screenGame);
 
         setTimeout(function(){
@@ -656,10 +673,40 @@
 
 
     /* ═══════════════════════════
-       INIT
+       INIT — restore last screen
        ═══════════════════════════ */
     syncProfileUI();
     refreshUI();
     cycleSpeech();
+
+    // Restore posisi terakhir kalau ada profil aktif
+    var nav = loadNav();
+    var hasProfile = !!getActiveProfile();
+    if (nav && hasProfile) {
+        // Langsung switch tanpa animasi (skip opening)
+        if (nav.s === 'levels') {
+            screenOpening.classList.remove('active');
+            screenLevels.classList.add('active');
+            topbar.classList.add('is-visible');
+        } else if (nav.s === 'stages' && nav.l) {
+            activeLevel = nav.l;
+            renderStageSelect(nav.l);
+            screenOpening.classList.remove('active');
+            screenStages.classList.add('active');
+            topbar.classList.add('is-visible');
+        } else if (nav.s === 'game' && nav.l != null && nav.t != null) {
+            activeLevel = nav.l;
+            screenOpening.classList.remove('active');
+            screenGame.classList.add('active');
+            topbar.classList.add('is-visible');
+            var ld = GameConfig.getLevel(nav.l);
+            gameLevelInfo.textContent = ld.title;
+            GameEngine.startLevel(nav.l, gameCanvas, {
+                onStageComplete: handleStageComplete,
+                onStageUpdate: handleStageUpdate,
+            });
+            GameEngine.startStage(nav.t);
+        }
+    }
 
 })();

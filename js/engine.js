@@ -498,6 +498,7 @@ var GameEngine = (function () {
 
         gridEl = canvasEl.querySelector('#eGrid');
         renderDebugLog();
+        bindDebugToolbar();
         canvasEl.querySelector('#btnDebugCek').addEventListener('click', debugCek);
         canvasEl.querySelector('#btnDebugReset').addEventListener('click', function(){
             moveHistory = stageData.prefill.slice();
@@ -542,15 +543,17 @@ var GameEngine = (function () {
         }
         el.innerHTML = h;
 
-        // Bind tap on log steps
+        // Bind tap on log steps (fresh setiap render karena innerHTML replace)
         var steps = el.querySelectorAll('.debug-step');
         for(var j=0;j<steps.length;j++) {
             steps[j].addEventListener('click', (function(idx){
                 return function(){ debugSelectedIdx = idx; renderDebugLog(); };
             })(j));
         }
+    }
 
-        // Bind tap on toolbar arrows (replace selected)
+    /** Bind toolbar arrows SEKALI (dipanggil dari startDebugPlay, bukan renderDebugLog) */
+    function bindDebugToolbar() {
         var btns = canvasEl.querySelectorAll('.arrow-btn--tap');
         for(var k=0;k<btns.length;k++) {
             btns[k].addEventListener('click', (function(btn){
@@ -564,9 +567,68 @@ var GameEngine = (function () {
         }
     }
 
+    /** Setelah CEK gagal di debug mode — auto reset grid, balikin ke edit */
+    function debugAutoRecover() {
+        // Reset grid visual
+        var allSlots = gridEl.querySelectorAll('.slot');
+        for(var i=0;i<allSlots.length;i++) {
+            allSlots[i].classList.remove('slot--robot','slot--visited','slot--wrong','slot--snap');
+            allSlots[i].querySelector('.slot__label').textContent = '';
+        }
+        var startS = slotEl(stageData.startPos.row, stageData.startPos.col);
+        if(startS) { startS.classList.add('slot--robot'); startS.querySelector('.slot__label').textContent = cfg.robotEmoji; }
+        var gp = goalPos();
+        var goalS = slotEl(gp.row, gp.col);
+        if(goalS) goalS.querySelector('.slot__label').textContent = stageData.goalEmoji;
+        if(stageData.checkpoints) {
+            for(var j=0;j<stageData.checkpoints.length;j++) {
+                var cp = stageData.checkpoints[j];
+                var cpS = slotEl(cp.row, cp.col);
+                if(cpS) cpS.querySelector('.slot__label').textContent = cp.emoji;
+            }
+        }
+        robotPos = {row:stageData.startPos.row, col:stageData.startPos.col};
+
+        // Remove overlay kalau ada
+        var ov = canvasEl.querySelector('#feedbackOverlay');
+        if(ov) ov.remove();
+
+        // Reset debug log — panah TETAP (user edits kept), tapi clear ok/err highlights
+        debugSelectedIdx = -1;
+        renderDebugLog();
+
+        // Toast feedback
+        showCheckpointToast('\uD83D\uDE0A', 'Masih ada yang salah!');
+    }
+
     function debugCek() {
-        // Animate robot walking the plan
         isPlaying = false;
+
+        // Reset grid dulu sebelum walk (bersihkan state sebelumnya)
+        var allSlots = gridEl.querySelectorAll('.slot');
+        for(var i=0;i<allSlots.length;i++) {
+            allSlots[i].classList.remove('slot--robot','slot--visited','slot--wrong','slot--snap');
+            allSlots[i].querySelector('.slot__label').textContent = '';
+        }
+        // Restore start + goal + checkpoint labels
+        var startS = slotEl(stageData.startPos.row, stageData.startPos.col);
+        if(startS) { startS.classList.add('slot--robot'); startS.querySelector('.slot__label').textContent = cfg.robotEmoji; }
+        var gp = goalPos();
+        var goalS = slotEl(gp.row, gp.col);
+        if(goalS) goalS.querySelector('.slot__label').textContent = stageData.goalEmoji;
+        if(stageData.checkpoints) {
+            for(var j=0;j<stageData.checkpoints.length;j++) {
+                var cp = stageData.checkpoints[j];
+                var cpS = slotEl(cp.row, cp.col);
+                if(cpS) cpS.querySelector('.slot__label').textContent = cp.emoji;
+            }
+        }
+
+        // Remove old overlay
+        var oldOv = canvasEl.querySelector('#feedbackOverlay');
+        if(oldOv) oldOv.remove();
+
+        // Walk animation
         var r = stageData.startPos.row, c = stageData.startPos.col;
         var step = 0;
         var allCorrect = true;
@@ -578,23 +640,34 @@ var GameEngine = (function () {
             }
 
             var dir = moveHistory[step];
+            if(!dir) { setTimeout(function(){ showFeedback(false); }, 300); return; }
             var correct = (dir === stageData.answerKey[step]);
 
             // Mark log step
             var logStep = canvasEl.querySelector('.debug-step[data-idx="'+step+'"]');
             if(logStep) logStep.classList.add(correct ? 'debug-step--ok' : 'debug-step--err');
 
-            // Move robot
+            // Move robot from old pos
             var old = slotEl(r,c);
             if(old){old.classList.remove('slot--robot');old.classList.add('slot--visited');old.querySelector('.slot__label').textContent=(step+1);}
 
-            switch(dir){case'up':r--;break;case'down':r++;break;case'left':c--;break;case'right':c++;break;}
-            r=Math.max(0,Math.min(r,stageData.gridRows-1));
-            c=Math.max(0,Math.min(c,stageData.gridCols-1));
+            // Calculate new pos
+            var nr=r, nc=c;
+            switch(dir){case'up':nr--;break;case'down':nr++;break;case'left':nc--;break;case'right':nc++;break;}
+
+            // Bounds check — kalau keluar grid = salah
+            if(nr<0||nr>=stageData.gridRows||nc<0||nc>=stageData.gridCols) {
+                allCorrect = false;
+                if(old){old.classList.remove('slot--visited');old.classList.add('slot--robot','slot--wrong');old.querySelector('.slot__label').textContent=cfg.robotEmoji;}
+                setTimeout(function(){ showFeedback(false); }, 500);
+                return;
+            }
+
+            r=nr; c=nc;
             robotPos={row:r,col:c};
 
             var ns = slotEl(r,c);
-            if(ns){ns.classList.add('slot--robot');ns.querySelector('.slot__label').textContent=cfg.robotEmoji;ns.classList.add('slot--snap');setTimeout(function(){ns.classList.remove('slot--snap');},250);}
+            if(ns){ns.classList.add('slot--robot');ns.querySelector('.slot__label').textContent=cfg.robotEmoji;ns.classList.add('slot--snap');setTimeout(function(){if(ns)ns.classList.remove('slot--snap');},250);}
 
             if(!correct){
                 allCorrect = false;
@@ -603,9 +676,9 @@ var GameEngine = (function () {
                 return;
             }
 
-            // Checkpoint sound
-            if(ns && ns.dataset.cp){ playSound('checkpoint'); showCheckpointToast(ns.dataset.cp); }
-            else if(ns && ns.classList.contains('slot--goal')){ playSound('goal'); }
+            // Sound
+            if(ns && ns.dataset.cp){ playSound('checkpoint'); playClapFile(); showCheckpointToast(ns.dataset.cp,'Berhasil menemukan'); }
+            else if(ns && ns.classList.contains('slot--goal')){ playSound('goal'); playClapFile(); showCheckpointToast(stageData.goalEmoji,'Sampai di'); }
             else { playSound('step'); }
 
             step++;
@@ -706,7 +779,16 @@ var GameEngine = (function () {
     }
 
     function showFeedback(correct) {
-        if(!correct){showWrong();return;}
+        if(!correct){
+            // Debug mode: auto-reset grid, balikin ke edit mode, ga perlu overlay
+            if(stageData.debugMode) {
+                playSound('wrong');
+                debugAutoRecover();
+                return;
+            }
+            showWrong();
+            return;
+        }
         playSound('success');
         canvasEl.insertAdjacentHTML('beforeend',
             '<div class="feedback-overlay feedback-overlay--correct" id="feedbackOverlay">'
