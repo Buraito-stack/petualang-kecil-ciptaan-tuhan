@@ -328,10 +328,11 @@ var GameEngine = (function () {
                 tone(ctx, 988, 0.4, t+0.1, 0.2, 'triangle');
                 tone(ctx, 1175, 0.45, t+0.2, 0.35, 'triangle');
             } else if (type === 'goal') {
-                // Kling kling sama kayak checkpoint
-                tone(ctx, 784, 0.4, t, 0.2, 'triangle');
-                tone(ctx, 988, 0.4, t+0.1, 0.2, 'triangle');
-                tone(ctx, 1175, 0.45, t+0.2, 0.35, 'triangle');
+                // CLING! — lebih tinggi, lebih keras, lebih panjang
+                tone(ctx, 1047, 0.5, t, 0.15, 'triangle');
+                tone(ctx, 1319, 0.5, t+0.08, 0.15, 'triangle');
+                tone(ctx, 1568, 0.55, t+0.16, 0.2, 'triangle');
+                tone(ctx, 2093, 0.6, t+0.26, 0.6, 'sine');
             } else if (type === 'success') {
                 // Fanfare pendek lalu play file clap hands
                 tone(ctx, 523, 0.4, t, 0.12, 'triangle');

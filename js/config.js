@@ -56,6 +56,7 @@ var GameConfig = (function () {
                 startPos: { row: 2, col: 0 },
                 answerKey: ['right','right','right','up','up'],
                 audio: 'level1_matahari.mp3',
+                checkpoints: [{ row: 2, col: 2, emoji: '\u2600\uFE0F' }],
             },
 
             /* ── T2: Bulan — 7 langkah ──
@@ -70,6 +71,7 @@ var GameConfig = (function () {
                 startPos: { row: 3, col: 0 },
                 answerKey: ['right','right','up','right','up','up','left'],
                 audio: 'level1_bulan.mp3',
+                checkpoints: [{ row: 2, col: 2, emoji: '\uD83C\uDF19' }],
             },
 
             /* ── T3: Bintang — 8 langkah ──
@@ -84,23 +86,23 @@ var GameConfig = (function () {
                 startPos: { row: 3, col: 0 },
                 answerKey: ['right','up','right','up','right','up','right','down'],
                 audio: 'level1_bintang.mp3',
+                checkpoints: [{ row: 1, col: 2, emoji: '\u2B50' }],
             },
 
-            /* ── T4: Perbaiki Jalan — 10 langkah ──
-               Grid 5x5
-               S(0,0) →r(0,1) →r(0,2) →d(1,2) →d(2,2) →r(2,3) →r(2,4) →d(3,4) →d(4,4) →l(4,3) →l(4,2)=G
+            /* ── T4: Perbaiki Jalan — 6 langkah ──
+               Grid 4x3
+               S(2,0) →r(2,1) →u(1,1) →u(0,1) →r(0,2) →r(0,3) →d(1,3)=G
             */
             {
                 id: 'l1_t4', title: 'Perbaiki Jalan',
                 goalEmoji: '\uD83D\uDD27',
                 story: 'Ada yang salah di jalannya! Cari dan perbaiki panah yang salah!',
-                gridCols: 5, gridRows: 5,
-                startPos: { row: 0, col: 0 },
-                answerKey: ['right','right','down','down','right','right','down','down','left','left'],
+                gridCols: 4, gridRows: 3,
+                startPos: { row: 2, col: 0 },
+                answerKey: ['right','up','up','right','right','down'],
                 audio: 'level1_debug.mp3',
-                // Prefill: beberapa panah salah (index 3, 6, 9)
                 debugMode: true,
-                prefill:   ['right','right','down','left','right','right','up','down','left','right'],
+                prefill:   ['right','up','left','right','right','up'],
             },
 
             /* ── T5: Final — 12 langkah ──
@@ -147,6 +149,7 @@ var GameConfig = (function () {
                 startPos: { row: 0, col: 0 },
                 answerKey: ['down','down','right','right','right'],
                 audio: 'level2_air.mp3',
+                checkpoints: [{ row: 2, col: 1, emoji: '\uD83D\uDCA7' }],
             },
 
             /* ── T2: Sungai — 7 langkah ──
@@ -161,6 +164,7 @@ var GameConfig = (function () {
                 startPos: { row: 0, col: 0 },
                 answerKey: ['right','right','down','right','right','down','left'],
                 audio: 'level2_sungai.mp3',
+                checkpoints: [{ row: 1, col: 3, emoji: '\uD83C\uDFDE\uFE0F' }],
             },
 
             /* ── T3: Laut — 8 langkah ──
@@ -175,22 +179,23 @@ var GameConfig = (function () {
                 startPos: { row: 0, col: 4 },
                 answerKey: ['left','left','down','down','left','left','down','down'],
                 audio: 'level2_laut.mp3',
+                checkpoints: [{ row: 2, col: 1, emoji: '\uD83C\uDF0A' }],
             },
 
-            /* ── T4: Perbaiki Jalan — 10 langkah ──
-               Grid 5x5
-               S(4,4) →l(4,3) →l(4,2) →u(3,2) →u(2,2) →l(2,1) →l(2,0) →u(1,0) →u(0,0) →r(0,1) →r(0,2)=G
+            /* ── T4: Perbaiki Jalan — 6 langkah ──
+               Grid 4x3
+               S(0,3) →l(0,2) →d(1,2) →d(2,2) →l(2,1) →l(2,0) →u(1,0)=G
             */
             {
                 id: 'l2_t4', title: 'Perbaiki Jalan',
                 goalEmoji: '\uD83D\uDD27',
                 story: 'Ada yang salah di jalannya! Cari dan perbaiki panah yang salah!',
-                gridCols: 5, gridRows: 5,
-                startPos: { row: 4, col: 4 },
-                answerKey: ['left','left','up','up','left','left','up','up','right','right'],
+                gridCols: 4, gridRows: 3,
+                startPos: { row: 0, col: 3 },
+                answerKey: ['left','down','down','left','left','up'],
                 audio: 'level2_debug.mp3',
                 debugMode: true,
-                prefill:   ['left','left','up','right','left','left','up','up','left','right'],
+                prefill:   ['left','down','right','left','left','down'],
             },
 
             /* ── T5: Final — 12 langkah ──
