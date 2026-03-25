@@ -2056,6 +2056,92 @@ body {
 }
 
 
+/* ═══════════════════════════
+   Debug Mode — Perbaiki Jalan
+   ═══════════════════════════ */
+.debug-label {
+    font-size: 0.8em !important;
+    background: var(--pastel-orange) !important;
+}
+
+.debug-log {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 10px;
+}
+
+.debug-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 48px;
+    height: 52px;
+    border: 3px solid #E0E0E0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    position: relative;
+}
+.debug-step:hover { border-color: var(--pastel-blue); }
+.debug-step__num { font-size: 10px; font-weight: 700; color: #B0BEC5; }
+.debug-step__arrow { font-size: 20px; line-height: 1; }
+
+/* Suspect (might be wrong — subtle hint) */
+.debug-step--suspect {
+    border-color: #FFCC80;
+    background: #FFF8E1;
+}
+
+/* Selected for editing */
+.debug-step--selected {
+    border-color: #42A5F5 !important;
+    background: #E3F2FD !important;
+    box-shadow: 0 0 12px rgba(66,165,245,0.4);
+    transform: scale(1.08);
+}
+
+/* After CEK — correct */
+.debug-step--ok {
+    border-color: #66BB6A !important;
+    background: #E8F5E9 !important;
+}
+
+/* After CEK — error */
+.debug-step--err {
+    border-color: #EF5350 !important;
+    background: #FFEBEE !important;
+    animation: slotShake 0.4s ease;
+}
+
+/* CEK button */
+.btn--cek {
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #66BB6A, #43A047);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1em;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(67,160,71,0.3);
+    transition: all 0.2s ease;
+}
+.btn--cek:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(67,160,71,0.45);
+}
+
+/* Arrow toolbar in debug mode — tap instead of drag */
+.arrow-btn--tap { cursor: pointer; }
+.arrow-btn--tap:active { transform: scale(0.9); }
+
+
 /* Checkpoint cell (benda penerang/air di jalur) */
 .slot--checkpoint {
     background: linear-gradient(145deg, #FFF9C4, #FFE082) !important;
@@ -2240,37 +2326,70 @@ body {
 }
 
 @media (max-width: 600px) {
-    :root { --topbar-height: 56px; }
-    .screen { padding: 20px 16px; padding-bottom: 130px; }
-    .opening__title { font-size: 1.9em; }
-    .robot:not(.robot--mini) { transform: scale(0.75); height: 310px; }
-    .levels__title { font-size: 1.4em; }
-    .levels__guide { display: none; }
-    .levels__grid { grid-template-columns: 1fr; gap: 16px; }
-    .card { max-width: 420px; margin: 0 auto; }
-    .topbar__inner { gap: 12px; }
+    /* Topbar: 2 baris compact, semua tetap tampil */
+    .topbar {
+        height: auto;
+        padding: 6px 12px;
+    }
+    .topbar__inner {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px 12px;
+    }
     .topbar__brand { display: none; }
-    .topbar__progress-stars { display: none; }
-    .game__canvas { padding: 20px 14px; }
-    .game__level-info { font-size: 0.95em; }
-    .play-area__hint { font-size: 12px; }
-    .story-card__text { font-size: 0.9em; }
-    .grid { --cell: 54px; gap: 4px; padding: 10px; border-radius: var(--radius-md); }
-    .slot { font-size: 22px; border-radius: 12px; }
+    .topbar__stats { padding: 4px 12px; font-size: 11px; gap: 10px; }
+    .topbar__progress { min-width: 100%; order: 10; }
+    .topbar__progress-track { height: 6px; }
+    .topbar__progress-stars { gap: 2px; }
+    .topbar__star { font-size: 11px; }
+
+    /* Profile & BGM buttons tetap fixed top, kecilkan aja */
+    .profile-btn { top: 6px; right: 6px; padding: 4px 8px; font-size: 0.7em; gap: 4px; }
+    .profile-btn__avatar { font-size: 16px; }
+    .bgm-btn { top: 6px; left: 6px; padding: 6px 8px; }
+    .bgm-btn__icon { font-size: 14px; }
+
+    /* Screen padding sesuaikan topbar baru (~58px) */
+    :root { --topbar-height: 58px; }
+    .screen { padding: 20px 12px; padding-bottom: 100px; }
+
+    .opening__title { font-size: 1.8em; }
+    .robot:not(.robot--mini) { transform: scale(0.65); height: 270px; }
+    .levels__title { font-size: 1.3em; }
+    .levels__guide { display: none; }
+    .levels__grid { grid-template-columns: 1fr; gap: 14px; }
+    .card { max-width: 400px; margin: 0 auto; }
+
+    /* Game area compact */
+    .game__canvas { padding: 16px 12px; }
+    .game__level-info { font-size: 0.85em; }
+    .game__progress-text { font-size: 12px; }
+    .play-area { gap: 10px; }
+    .play-area__stage { font-size: 12px; }
+    .play-area__moves { font-size: 11px; padding: 3px 10px; }
+    .story-card__text { font-size: 0.85em; }
+    .story-card__emoji { font-size: 48px; }
+    .grid { --cell: 46px; gap: 4px; padding: 8px; border-radius: var(--radius-md); }
+    .slot { font-size: 18px; border-radius: 10px; }
+    .move-log { padding: 4px 6px; }
+    .move-log__step { font-size: 16px; }
+    .arrow-toolbar__row { gap: 6px; padding: 6px 10px; border-radius: var(--radius-md); }
+    .arrow-btn { width: 52px; height: 52px; border-radius: 12px; }
+    .arrow-btn__emoji { font-size: 20px; }
+    .arrow-btn__label { font-size: 8px; }
 }
 
-@media (max-width: 420px) {
-    .opening__title { font-size: 1.5em; }
-    .robot:not(.robot--mini) { transform: scale(0.6); height: 260px; }
-    .btn--start { padding: 14px 32px; font-size: 1em; }
-    .topbar__stats { padding: 4px 12px; font-size: 12px; }
-    .card { padding: 24px 18px; }
-    .card__title { font-size: 1.25em; }
-    .grid { --cell: 48px; gap: 3px; padding: 8px; border-radius: 16px; }
-    .slot { font-size: 20px; border-radius: 10px; }
-    .arrow-btn { width: 52px; height: 52px; border-radius: 14px; }
-    .arrow-btn__emoji { font-size: 22px; }
-    .arrow-toolbar__row { gap: 6px; padding: 8px 12px; }
-    .feedback-overlay__card { padding: 20px 18px; }
-    .feedback-overlay__title { font-size: 1.1em; }
+@media (max-width: 380px) {
+    .topbar__stats { font-size: 10px; padding: 3px 8px; }
+    .topbar__progress-stars { display: none; }
+    .opening__title { font-size: 1.4em; }
+    .robot:not(.robot--mini) { transform: scale(0.55); height: 230px; }
+    .btn--start { padding: 12px 28px; font-size: 0.95em; }
+    .grid { --cell: 38px; gap: 3px; padding: 6px; }
+    .slot { font-size: 16px; border-radius: 8px; }
+    .arrow-btn { width: 46px; height: 46px; }
+    .arrow-btn__emoji { font-size: 18px; }
+    .game__canvas { padding: 12px 10px; }
+    .feedback-overlay__card { padding: 18px 14px; }
+    .feedback-overlay__title { font-size: 1em; }
 }

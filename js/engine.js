@@ -320,33 +320,55 @@ var GameEngine = (function () {
             var t = ctx.currentTime;
 
             if (type === 'step') {
-                // Tick ringan — 1 nada pendek
-                tone(ctx, 880, 0.06, t, 0.1);
+                // Pop ringan
+                tone(ctx, 880, 0.25, t, 0.08, 'sine');
             } else if (type === 'checkpoint') {
-                // Ding dong — 2 nada naik
-                tone(ctx, 523, 0.15, t, 0.3);
-                tone(ctx, 659, 0.15, t + 0.12, 0.3);
+                // Kling kling! — 3 nada naik cepat
+                tone(ctx, 784, 0.4, t, 0.2, 'triangle');
+                tone(ctx, 988, 0.4, t+0.1, 0.2, 'triangle');
+                tone(ctx, 1175, 0.45, t+0.2, 0.35, 'triangle');
             } else if (type === 'goal') {
-                // Tada — 3 nada naik meriah
-                tone(ctx, 523, 0.15, t, 0.35);
-                tone(ctx, 659, 0.15, t + 0.1, 0.35);
-                tone(ctx, 784, 0.18, t + 0.2, 0.5);
+                // Kling kling sama kayak checkpoint
+                tone(ctx, 784, 0.4, t, 0.2, 'triangle');
+                tone(ctx, 988, 0.4, t+0.1, 0.2, 'triangle');
+                tone(ctx, 1175, 0.45, t+0.2, 0.35, 'triangle');
+            } else if (type === 'success') {
+                // Fanfare pendek lalu play file clap hands
+                tone(ctx, 523, 0.4, t, 0.12, 'triangle');
+                tone(ctx, 659, 0.4, t+0.08, 0.12, 'triangle');
+                tone(ctx, 784, 0.45, t+0.16, 0.15, 'triangle');
+                tone(ctx, 1047, 0.5, t+0.26, 0.4, 'sine');
+                // Play clap hands audio file
+                playClapFile();
+            } else if (type === 'wrong') {
+                // Bwom — nada turun
+                tone(ctx, 330, 0.3, t, 0.15, 'sawtooth');
+                tone(ctx, 220, 0.25, t+0.12, 0.3, 'sawtooth');
             }
         } catch(e) {}
     }
 
-    function tone(ctx, freq, vol, start, dur) {
+    function playClapFile() {
+        try {
+            var a = new Audio('assets/clap hands.m4a');
+            a.volume = 1;
+            a.play();
+        } catch(e) {}
+    }
+
+    function tone(ctx, freq, vol, start, dur, wave) {
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
-        osc.type = 'sine';
+        osc.type = wave || 'sine';
         osc.frequency.value = freq;
         gain.gain.value = vol;
         gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(start);
-        osc.stop(start + dur);
+        osc.stop(start + dur + 0.05);
     }
+
 
     /** Mini toast di atas grid saat checkpoint */
     function showCheckpointToast(emoji) {
@@ -402,7 +424,7 @@ var GameEngine = (function () {
         var audio = canvasEl.querySelector('#storyAudio');
         try{if(audio) audio.play();}catch(e){}
 
-        canvasEl.querySelector('#btnReady').addEventListener('click', startPlay);
+        canvasEl.querySelector('#btnReady').addEventListener('click', stageData.debugMode ? startDebugPlay : startPlay);
         canvasEl.querySelector('#btnListen').addEventListener('click', function(){
             if(audio){audio.currentTime=0;audio.play();}
         });
@@ -439,6 +461,155 @@ var GameEngine = (function () {
         canvasEl.querySelector('#btnUlangi').addEventListener('click', resetGrid);
         if(onStageUpdate) onStageUpdate(stageIdx, tot);
     }
+
+    /* ═══════════════════════════
+       DEBUG MODE — Perbaiki Jalan
+       ═══════════════════════════
+       Prefill panah (beberapa salah).
+       Anak tap panah di log → tap panah toolbar → ganti.
+       Tekan CEK → robot jalan → validasi.
+    */
+    var debugSelectedIdx = -1;
+
+    function startDebugPlay() {
+        robotPos = {row:stageData.startPos.row,col:stageData.startPos.col};
+        moveHistory = stageData.prefill.slice();
+        isPlaying = false; // drag disabled, pakai tap mode
+        var n = stageIdx+1, tot = GameConfig.getStageCount(currentLevel);
+
+        canvasEl.innerHTML =
+            '<div class="play-area">'
+            +'<div class="play-area__header">'
+            +'  <span class="play-area__stage">Tahap '+n+'/'+tot+' \u2014 '+stageData.title+'</span>'
+            +'  <span class="play-area__moves debug-label">\uD83D\uDD27 Tap panah yang salah, lalu pilih panah yang benar</span>'
+            +'</div>'
+            +gridHTML()
+            +'<div class="debug-log" id="debugLog"></div>'
+            +debugToolbarHTML()
+            +'<div class="play-area__actions">'
+            +'  <button class="btn btn--cek" id="btnDebugCek">\u2705 CEK</button>'
+            +'  <button class="btn btn--reset-stage" id="btnDebugReset">\uD83D\uDD04 Reset</button>'
+            +'</div>'
+            +'</div>';
+
+        gridEl = canvasEl.querySelector('#eGrid');
+        renderDebugLog();
+        canvasEl.querySelector('#btnDebugCek').addEventListener('click', debugCek);
+        canvasEl.querySelector('#btnDebugReset').addEventListener('click', function(){
+            moveHistory = stageData.prefill.slice();
+            debugSelectedIdx = -1;
+            renderDebugLog();
+            // Reset grid
+            var parent = gridEl.parentElement;
+            var tmp = document.createElement('div');
+            tmp.innerHTML = gridHTML();
+            parent.replaceChild(tmp.firstChild, gridEl);
+            gridEl = canvasEl.querySelector('#eGrid');
+            var ov = canvasEl.querySelector('#feedbackOverlay');
+            if(ov) ov.remove();
+        });
+        if(onStageUpdate) onStageUpdate(stageIdx, tot);
+    }
+
+    function debugToolbarHTML() {
+        var dirs = ['left','up','down','right'];
+        var h = '<div class="arrow-toolbar" id="debugToolbar"><div class="arrow-toolbar__row">';
+        for (var i = 0; i < dirs.length; i++) {
+            var d = dirs[i];
+            h += '<button class="arrow-btn arrow-btn--tap" data-dir="'+d+'">'
+               + '<span class="arrow-btn__emoji">'+ARROWS[d].emoji+'</span>'
+               + '<span class="arrow-btn__label">'+ARROWS[d].label+'</span>'
+               + '</button>';
+        }
+        return h + '</div></div>';
+    }
+
+    function renderDebugLog() {
+        var el = canvasEl.querySelector('#debugLog');
+        if(!el) return;
+        var h = '';
+        for(var i=0;i<moveHistory.length;i++) {
+            var isWrong = (moveHistory[i] !== stageData.answerKey[i]);
+            var isSel = (i === debugSelectedIdx);
+            h += '<button class="debug-step'+(isSel?' debug-step--selected':'')+(isWrong?' debug-step--suspect':'')+'" data-idx="'+i+'">'
+               + '<span class="debug-step__num">'+(i+1)+'</span>'
+               + '<span class="debug-step__arrow">'+ARROWS[moveHistory[i]].emoji+'</span>'
+               + '</button>';
+        }
+        el.innerHTML = h;
+
+        // Bind tap on log steps
+        var steps = el.querySelectorAll('.debug-step');
+        for(var j=0;j<steps.length;j++) {
+            steps[j].addEventListener('click', (function(idx){
+                return function(){ debugSelectedIdx = idx; renderDebugLog(); };
+            })(j));
+        }
+
+        // Bind tap on toolbar arrows (replace selected)
+        var btns = canvasEl.querySelectorAll('.arrow-btn--tap');
+        for(var k=0;k<btns.length;k++) {
+            btns[k].addEventListener('click', (function(btn){
+                return function(){
+                    if(debugSelectedIdx < 0) return;
+                    moveHistory[debugSelectedIdx] = btn.dataset.dir;
+                    playSound('step');
+                    renderDebugLog();
+                };
+            })(btns[k]));
+        }
+    }
+
+    function debugCek() {
+        // Animate robot walking the plan
+        isPlaying = false;
+        var r = stageData.startPos.row, c = stageData.startPos.col;
+        var step = 0;
+        var allCorrect = true;
+
+        function walkNext() {
+            if(step >= moveHistory.length) {
+                setTimeout(function(){ showFeedback(allCorrect); }, 300);
+                return;
+            }
+
+            var dir = moveHistory[step];
+            var correct = (dir === stageData.answerKey[step]);
+
+            // Mark log step
+            var logStep = canvasEl.querySelector('.debug-step[data-idx="'+step+'"]');
+            if(logStep) logStep.classList.add(correct ? 'debug-step--ok' : 'debug-step--err');
+
+            // Move robot
+            var old = slotEl(r,c);
+            if(old){old.classList.remove('slot--robot');old.classList.add('slot--visited');old.querySelector('.slot__label').textContent=(step+1);}
+
+            switch(dir){case'up':r--;break;case'down':r++;break;case'left':c--;break;case'right':c++;break;}
+            r=Math.max(0,Math.min(r,stageData.gridRows-1));
+            c=Math.max(0,Math.min(c,stageData.gridCols-1));
+            robotPos={row:r,col:c};
+
+            var ns = slotEl(r,c);
+            if(ns){ns.classList.add('slot--robot');ns.querySelector('.slot__label').textContent=cfg.robotEmoji;ns.classList.add('slot--snap');setTimeout(function(){ns.classList.remove('slot--snap');},250);}
+
+            if(!correct){
+                allCorrect = false;
+                if(ns) ns.classList.add('slot--wrong');
+                setTimeout(function(){ showFeedback(false); }, 500);
+                return;
+            }
+
+            // Checkpoint sound
+            if(ns && ns.dataset.cp){ playSound('checkpoint'); showCheckpointToast(ns.dataset.cp); }
+            else if(ns && ns.classList.contains('slot--goal')){ playSound('goal'); }
+            else { playSound('step'); }
+
+            step++;
+            setTimeout(walkNext, 350);
+        }
+        walkNext();
+    }
+
 
     function undoStep() {
         if(moveHistory.length === 0) return;
@@ -516,6 +687,7 @@ var GameEngine = (function () {
        FEEDBACK
        ═══════════════════════════ */
     function showWrong() {
+        playSound('wrong');
         var rs = slotEl(robotPos.row,robotPos.col);
         if(rs) rs.classList.add('slot--wrong');
         canvasEl.insertAdjacentHTML('beforeend',
@@ -531,6 +703,7 @@ var GameEngine = (function () {
 
     function showFeedback(correct) {
         if(!correct){showWrong();return;}
+        playSound('success');
         canvasEl.insertAdjacentHTML('beforeend',
             '<div class="feedback-overlay feedback-overlay--correct" id="feedbackOverlay">'
             +'<div class="feedback-overlay__card">'

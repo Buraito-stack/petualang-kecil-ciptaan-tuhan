@@ -93,11 +93,14 @@ var GameConfig = (function () {
             {
                 id: 'l1_t4', title: 'Perbaiki Jalan',
                 goalEmoji: '\uD83D\uDD27',
-                story: 'Ayo perbaiki jalannya!',
+                story: 'Ada yang salah di jalannya! Cari dan perbaiki panah yang salah!',
                 gridCols: 5, gridRows: 5,
                 startPos: { row: 0, col: 0 },
                 answerKey: ['right','right','down','down','right','right','down','down','left','left'],
                 audio: 'level1_debug.mp3',
+                // Prefill: beberapa panah salah (index 3, 6, 9)
+                debugMode: true,
+                prefill:   ['right','right','down','left','right','right','up','down','left','right'],
             },
 
             /* ── T5: Final — 12 langkah ──
@@ -181,11 +184,13 @@ var GameConfig = (function () {
             {
                 id: 'l2_t4', title: 'Perbaiki Jalan',
                 goalEmoji: '\uD83D\uDD27',
-                story: 'Ayo perbaiki jalan ke laut!',
+                story: 'Ada yang salah di jalannya! Cari dan perbaiki panah yang salah!',
                 gridCols: 5, gridRows: 5,
                 startPos: { row: 4, col: 4 },
                 answerKey: ['left','left','up','up','left','left','up','up','right','right'],
                 audio: 'level2_debug.mp3',
+                debugMode: true,
+                prefill:   ['left','left','up','right','left','left','up','up','left','right'],
             },
 
             /* ── T5: Final — 12 langkah ──
