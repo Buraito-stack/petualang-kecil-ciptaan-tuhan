@@ -532,30 +532,51 @@
     }
 
     function syncBgm() {
+        bgmBtn.classList.toggle('bgm-btn--on', bgmOn);
+        bgmIcon.textContent = bgmOn ? '\uD83C\uDFB5' : '\uD83D\uDD07';
         if (bgmOn) {
             bgmAudio.play().catch(function(){});
-            bgmBtn.classList.add('bgm-btn--on');
-            bgmIcon.textContent = '\uD83C\uDFB5';
         } else {
             bgmAudio.pause();
-            bgmBtn.classList.remove('bgm-btn--on');
-            bgmIcon.textContent = '\uD83D\uDD07';
         }
     }
 
     bgmBtn.addEventListener('click', toggleBgm);
     syncBgm();
 
-    // Browser blocks autoplay until user interacts — listen ALL interaction types
-    function tryAutoplay() {
-        if (bgmOn && bgmAudio.paused) bgmAudio.play().catch(function(){});
-        // Cleanup setelah berhasil
-        ['click','touchstart','keydown'].forEach(function(evt){
-            document.removeEventListener(evt, tryAutoplay);
+    // Mobile: browser blokir audio sampai user tap/klik
+    // Coba play ulang tiap interaksi sampai berhasil
+    var audioUnlocked = false;
+    function unlockAudio() {
+        if (audioUnlocked) return;
+        // Unlock AudioContext untuk sound effects
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var buf = ctx.createBuffer(1, 1, 22050);
+            var src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(ctx.destination);
+            src.start(0);
+        } catch(e) {}
+
+        // Play BGM
+        if (bgmOn && bgmAudio.paused) {
+            bgmAudio.play().then(function() {
+                audioUnlocked = true;
+                removeUnlockListeners();
+            }).catch(function(){});
+        } else {
+            audioUnlocked = true;
+            removeUnlockListeners();
+        }
+    }
+    function removeUnlockListeners() {
+        ['click','touchstart','touchend','keydown'].forEach(function(e){
+            document.removeEventListener(e, unlockAudio, true);
         });
     }
-    ['click','touchstart','keydown'].forEach(function(evt){
-        document.addEventListener(evt, tryAutoplay, { once: false });
+    ['click','touchstart','touchend','keydown'].forEach(function(e){
+        document.addEventListener(e, unlockAudio, true);
     });
 
 
