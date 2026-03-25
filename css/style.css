@@ -363,28 +363,26 @@ body {
 .screen {
     position: relative;
     z-index: 10;
-    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    padding-bottom: 100px;
-}
-.screen--opening {
+    padding: 16px;
     overflow: hidden;
-    height: 100vh;
-    min-height: 0;
-    padding: 0 20px;
 }
 .screen.active {
     display: flex;
 }
 
-/* Screen yg butuh topbar mendapat padding atas ekstra */
+/* Screen yg butuh topbar */
 .screen--levels,
 .screen--stages,
 .screen--game {
-    padding-top: calc(var(--topbar-height) + 24px);
+    padding-top: calc(var(--topbar-height) + 12px);
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
 }
 
 /* Transisi antar screen */
@@ -1216,9 +1214,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     width: 100%;
     max-width: 900px;
+    margin: 0 auto;
 }
 
 .levels__header {
@@ -1247,8 +1246,11 @@ body {
 .levels__grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
+    gap: 16px;
     width: 100%;
+    flex: 1;
+    min-height: 0;
+    align-content: start;
 }
 
 .card {
@@ -1298,14 +1300,14 @@ body {
 }
 
 .card__icon {
-    width: 90px;
-    height: 90px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 42px;
-    margin: 0 auto 18px;
+    font-size: 30px;
+    margin: 0 auto 8px;
 }
 
 .card__tag {
@@ -1322,14 +1324,14 @@ body {
 }
 
 .card__title {
-    font-size: 1.45em;
+    font-size: 1.2em;
     color: var(--text-dark);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 .card__desc {
-    font-size: 0.95em;
+    font-size: 0.85em;
     color: var(--text-light);
-    line-height: 1.5;
+    line-height: 1.4;
     margin-bottom: 14px;
 }
 
@@ -1419,9 +1421,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+    gap: 14px;
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
+    margin: 0 auto;
 }
 .stages__header {
     width: 100%;
@@ -1577,10 +1580,11 @@ body {
    ═══════════════════════════ */
 .game {
     width: 100%;
-    max-width: 650px;
+    max-width: 750px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 8px;
 }
 
 .game__header {
@@ -1631,10 +1635,9 @@ body {
 .game__canvas {
     background: white;
     border-radius: var(--radius);
-    padding: 36px 32px;
+    padding: 20px 16px;
     box-shadow: var(--shadow-card);
     border: 3px solid var(--pastel-green);
-    min-height: 300px;
 }
 
 /* ── Quiz elements ── */
@@ -1855,7 +1858,7 @@ body {
 .play-area {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
 }
 .play-area__header {
     display: flex;
@@ -1921,7 +1924,7 @@ body {
    Visited = sudah dilewati robot (trail)
    ═══════════════════════════ */
 .grid {
-    --cell: 72px;
+    --cell: min(72px, 10vw, 8vh);
     display: grid;
     gap: 6px;
     justify-content: center;
