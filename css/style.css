@@ -367,8 +367,14 @@ body {
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 30px;
-    padding-bottom: 140px; /* ruang untuk rumput */
+    padding: 20px;
+    padding-bottom: 100px;
+}
+.screen--opening {
+    overflow: hidden;
+    height: 100vh;
+    min-height: 0;
+    padding: 0 20px;
 }
 .screen.active {
     display: flex;
@@ -406,13 +412,28 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     text-align: center;
     max-width: 520px;
+    max-height: 100vh;
+    justify-content: center;
+}
+
+/* Robot + bubble group */
+.robot-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+}
+.robot-group .speech-bubble {
+    margin-bottom: -10px;
+    z-index: 5;
 }
 
 .opening__title {
-    font-size: 2.8em;
+    font-size: clamp(1.6em, 4.5vw, 2.8em);
     line-height: 1.15;
     letter-spacing: 1px;
     background: linear-gradient(135deg, #FF7043, #FF8A65, #FFB74D, #FFA726);
@@ -820,6 +841,9 @@ body {
     position: relative;
     width: 280px;
     height: 400px;
+    transform: scale(0.65);
+    transform-origin: center center;
+    margin: -60px 0;
 }
 .robot--mini {
     transform: scale(0.48);
@@ -1068,12 +1092,12 @@ body {
    ═══════════════════════════ */
 .speech-bubble {
     background: white;
-    padding: 18px 24px;
+    padding: 14px 20px;
     border-radius: var(--radius);
     box-shadow: var(--shadow-soft);
-    max-width: 320px;
+    max-width: 300px;
     text-align: center;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text-mid);
     line-height: 1.55;
     border: 3px solid var(--pastel-blue);
@@ -2354,7 +2378,7 @@ body {
     .screen { padding: 20px 12px; padding-bottom: 100px; }
 
     .opening__title { font-size: 1.8em; }
-    .robot:not(.robot--mini) { transform: scale(0.65); height: 270px; }
+    .robot:not(.robot--mini) { transform: scale(0.5); margin: -80px 0; }
     .levels__title { font-size: 1.3em; }
     .levels__guide { display: none; }
     .levels__grid { grid-template-columns: 1fr; gap: 14px; }
@@ -2383,7 +2407,7 @@ body {
     .topbar__stats { font-size: 10px; padding: 3px 8px; }
     .topbar__progress-stars { display: none; }
     .opening__title { font-size: 1.4em; }
-    .robot:not(.robot--mini) { transform: scale(0.55); height: 230px; }
+    .robot:not(.robot--mini) { transform: scale(0.4); margin: -100px 0; }
     .btn--start { padding: 12px 28px; font-size: 0.95em; }
     .grid { --cell: 38px; gap: 3px; padding: 6px; }
     .slot { font-size: 16px; border-radius: 8px; }

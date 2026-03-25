@@ -71,7 +71,7 @@
     var btnAddPopup       = $('#btnAddPopup');
 
     var activeLevel = null;
-    var MAX_PROFILES = 10;
+    var MAX_PROFILES = 15;
     var PROFILES_KEY = 'petualang_profiles';
 
 
