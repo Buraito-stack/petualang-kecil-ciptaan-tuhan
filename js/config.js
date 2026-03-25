@@ -201,7 +201,7 @@ var GameConfig = (function () {
             */
             {
                 id: 'l2_t5', title: 'Kunjungi Semua!',
-                goalEmoji: '\uD83C\uDF0A',
+                goalEmoji: '\uD83C\uDF1F',
                 story: 'Ayo kunjungi air, sungai, dan laut! \uD83D\uDCA7\uD83C\uDFDE\uFE0F\uD83C\uDF0A',
                 gridCols: 6, gridRows: 5,
                 startPos: { row: 0, col: 0 },
