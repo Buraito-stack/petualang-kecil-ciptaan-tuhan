@@ -286,9 +286,12 @@ var GameEngine = (function () {
             if(ns.dataset.cp) {
                 ns.classList.add('slot--checkpoint-hit');
                 playSound('checkpoint');
-                showCheckpointToast(ns.dataset.cp);
+                playClapFile();
+                showCheckpointToast(ns.dataset.cp, 'Berhasil menemukan');
             } else if(ns.classList.contains('slot--goal')) {
                 playSound('goal');
+                playClapFile();
+                showCheckpointToast(stageData.goalEmoji, 'Sampai di');
             } else {
                 playSound('step');
             }
@@ -371,14 +374,14 @@ var GameEngine = (function () {
     }
 
 
-    /** Mini toast di atas grid saat checkpoint */
-    function showCheckpointToast(emoji) {
+    /** Mini toast di atas grid */
+    function showCheckpointToast(emoji, prefix) {
         var el = document.createElement('div');
         el.className = 'checkpoint-toast';
-        el.textContent = emoji + ' Ketemu!';
+        el.textContent = (prefix || 'Ketemu') + ' ' + emoji + '!';
         canvasEl.appendChild(el);
         setTimeout(function(){ el.classList.add('is-visible'); }, 10);
-        setTimeout(function(){ el.remove(); }, 1500);
+        setTimeout(function(){ el.remove(); }, 2000);
     }
 
 

@@ -56,7 +56,6 @@ var GameConfig = (function () {
                 startPos: { row: 2, col: 0 },
                 answerKey: ['right','right','right','up','up'],
                 audio: 'level1_matahari.mp3',
-                checkpoints: [{ row: 2, col: 2, emoji: '\u2600\uFE0F' }],
             },
 
             /* ── T2: Bulan — 7 langkah ──
@@ -71,7 +70,6 @@ var GameConfig = (function () {
                 startPos: { row: 3, col: 0 },
                 answerKey: ['right','right','up','right','up','up','left'],
                 audio: 'level1_bulan.mp3',
-                checkpoints: [{ row: 2, col: 2, emoji: '\uD83C\uDF19' }],
             },
 
             /* ── T3: Bintang — 8 langkah ──
@@ -86,7 +84,6 @@ var GameConfig = (function () {
                 startPos: { row: 3, col: 0 },
                 answerKey: ['right','up','right','up','right','up','right','down'],
                 audio: 'level1_bintang.mp3',
-                checkpoints: [{ row: 1, col: 2, emoji: '\u2B50' }],
             },
 
             /* ── T4: Perbaiki Jalan — 6 langkah ──
@@ -149,7 +146,6 @@ var GameConfig = (function () {
                 startPos: { row: 0, col: 0 },
                 answerKey: ['down','down','right','right','right'],
                 audio: 'level2_air.mp3',
-                checkpoints: [{ row: 2, col: 1, emoji: '\uD83D\uDCA7' }],
             },
 
             /* ── T2: Sungai — 7 langkah ──
@@ -164,7 +160,6 @@ var GameConfig = (function () {
                 startPos: { row: 0, col: 0 },
                 answerKey: ['right','right','down','right','right','down','left'],
                 audio: 'level2_sungai.mp3',
-                checkpoints: [{ row: 1, col: 3, emoji: '\uD83C\uDFDE\uFE0F' }],
             },
 
             /* ── T3: Laut — 8 langkah ──
@@ -179,7 +174,6 @@ var GameConfig = (function () {
                 startPos: { row: 0, col: 4 },
                 answerKey: ['left','left','down','down','left','left','down','down'],
                 audio: 'level2_laut.mp3',
-                checkpoints: [{ row: 2, col: 1, emoji: '\uD83C\uDF0A' }],
             },
 
             /* ── T4: Perbaiki Jalan — 6 langkah ──
