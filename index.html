@@ -8,11 +8,8 @@
 </head>
 <body>
 
-    <!-- =========================================
-         BACKGROUND SCENE (fixed, selalu tampil)
-         ========================================= -->
+    <!-- Background scene -->
     <div class="sky-scene" aria-hidden="true">
-        <!-- Matahari -->
         <div class="sun">
             <div class="sun__ray" style="transform:rotate(0deg)"></div>
             <div class="sun__ray" style="transform:rotate(30deg)"></div>
@@ -27,34 +24,29 @@
             <div class="sun__ray" style="transform:rotate(300deg)"></div>
             <div class="sun__ray" style="transform:rotate(330deg)"></div>
         </div>
-        <!-- Awan -->
         <div class="cloud cloud--1"></div>
         <div class="cloud cloud--2"></div>
         <div class="cloud cloud--3"></div>
         <div class="cloud cloud--4"></div>
-        <!-- Burung -->
         <div class="bird bird--1">~v~</div>
         <div class="bird bird--2">~v~</div>
         <div class="bird bird--3">~v~</div>
     </div>
 
-    <!-- Bunga dekoratif -->
+    <!-- Dekorasi -->
     <div class="flower" style="left:5%" aria-hidden="true">&#127800;</div>
     <div class="flower" style="left:22%; font-size:20px; bottom:36px" aria-hidden="true">&#127804;</div>
     <div class="flower" style="left:44%" aria-hidden="true">&#127799;</div>
     <div class="flower" style="left:66%; font-size:22px; bottom:28px" aria-hidden="true">&#127803;</div>
     <div class="flower" style="left:86%; font-size:18px; bottom:38px" aria-hidden="true">&#127802;</div>
 
-    <!-- Rumput -->
     <div class="ground" aria-hidden="true">
         <div class="ground__layer ground__layer--back"></div>
         <div class="ground__layer ground__layer--front"></div>
     </div>
 
 
-    <!-- =========================================
-         PROGRESS BAR (persistent, selalu di atas)
-         ========================================= -->
+    <!-- Topbar -->
     <header class="topbar" id="topbar">
         <div class="topbar__inner">
             <div class="topbar__brand">Petualang Kecil</div>
@@ -73,7 +65,6 @@
                     <span class="topbar__stat-max">/ 2</span>
                 </div>
             </div>
-            <!-- Star progress bar visual -->
             <div class="topbar__progress">
                 <div class="topbar__progress-track">
                     <div class="topbar__progress-fill" id="progressFill"></div>
@@ -95,15 +86,12 @@
     </header>
 
 
-    <!-- =========================================
-         SCREEN 1 — OPENING SCREEN
-         ========================================= -->
+    <!-- Screen: Opening -->
     <section class="screen screen--opening active" id="screenOpening">
         <div class="opening">
             <h1 class="opening__title">Petualang Kecil<br>Ciptaan Tuhan</h1>
             <p class="opening__tagline">Belajar mengenal keajaiban alam bersama Robi!</p>
 
-            <!-- Robot + Speech bubble (satu group) -->
             <div class="robot-group">
                 <div class="speech-bubble" id="speechBubble">
                     Halo! Aku <strong>Robi</strong>, teman petualangmu!
@@ -137,7 +125,6 @@
                 </div>
             </div>
 
-            <!-- First-time registration (tengah, hilang setelah daftar) -->
             <div class="first-register" id="firstRegister">
                 <h3 class="first-register__title">Siapa namamu, petualang?</h3>
                 <div class="first-register__row">
@@ -147,7 +134,6 @@
                 </div>
             </div>
 
-            <!-- Tombol start (muncul setelah ada profil) -->
             <button class="btn btn--start" id="btnStart" style="display:none">
                 Mulai Petualangan <span class="btn__arrow">&#10132;</span>
             </button>
@@ -155,9 +141,7 @@
         </div>
     </section>
 
-    <!-- =========================================
-         POPUP — PETUNJUK PENGGUNAAN
-         ========================================= -->
+    <!-- Popup: Petunjuk -->
     <div class="guide-overlay" id="guideOverlay">
         <div class="guide">
             <button class="guide__close" id="guideClose">&#10005;</button>
@@ -238,9 +222,7 @@
     </div>
 
 
-    <!-- =========================================
-         SCREEN 2 — LEVEL MENU
-         ========================================= -->
+    <!-- Screen: Level Select -->
     <section class="screen screen--levels" id="screenLevels">
         <div class="levels">
             <header class="levels__header">
@@ -248,18 +230,14 @@
                 <h2 class="levels__title">Pilih Petualanganmu!</h2>
             </header>
 
-            <!-- Level Cards Grid -->
             <div class="levels__grid">
-                <!-- Level 1: Benda Penerang -->
                 <article class="card card--lv1" id="cardLevel1" data-level="1">
                     <div class="card__badge-done">Selesai &#10003;</div>
                     <div class="card__ribbon"></div>
                     <div class="card__icon">&#9728;&#65039;</div>
                     <span class="card__tag">Level 1</span>
                     <h3 class="card__title">Benda Penerang</h3>
-                    <p class="card__desc">
-                        Kenali benda-benda ciptaan Tuhan yang memberikan cahaya untuk dunia kita!
-                    </p>
+                    <p class="card__desc">Kenali benda-benda ciptaan Tuhan yang memberikan cahaya untuk dunia kita!</p>
                     <div class="card__stars" id="starsLevel1">
                         <span class="star">&#11088;</span>
                         <span class="star">&#11088;</span>
@@ -270,11 +248,9 @@
                     <button class="btn btn--play btn--play-yellow">Mulai Petualangan &#10132;</button>
                 </article>
 
-                <!-- Level 2: Air -->
                 <article class="card card--lv2 is-locked" id="cardLevel2" data-level="2">
                     <div class="card__badge-done">Selesai &#10003;</div>
                     <div class="card__ribbon"></div>
-                    <!-- Lock overlay -->
                     <div class="card__lock" id="lockOverlay2">
                         <span class="card__lock-icon">&#128274;</span>
                         <span class="card__lock-text">Selesaikan Level 1 dulu!</span>
@@ -282,9 +258,7 @@
                     <div class="card__icon">&#128167;</div>
                     <span class="card__tag">Level 2</span>
                     <h3 class="card__title">Air</h3>
-                    <p class="card__desc">
-                        Pelajari keajaiban air, ciptaan Tuhan yang menjadi sumber kehidupan!
-                    </p>
+                    <p class="card__desc">Pelajari keajaiban air, ciptaan Tuhan yang menjadi sumber kehidupan!</p>
                     <div class="card__stars" id="starsLevel2">
                         <span class="star">&#11088;</span>
                         <span class="star">&#11088;</span>
@@ -301,9 +275,7 @@
     </section>
 
 
-    <!-- =========================================
-         SCREEN 3 — STAGE SELECT (pilih tahap)
-         ========================================= -->
+    <!-- Screen: Stage Select -->
     <section class="screen screen--stages" id="screenStages">
         <div class="stages">
             <header class="stages__header">
@@ -311,46 +283,36 @@
                 <h2 class="stages__title" id="stagesTitle"></h2>
             </header>
             <div id="stagesProgressBar"></div>
-            <div class="stages__grid" id="stagesGrid">
-                <!-- Diisi JS: tombol [1] [2] [3] [4] [5] -->
-            </div>
+            <div class="stages__grid" id="stagesGrid"></div>
         </div>
     </section>
 
 
-    <!-- =========================================
-         SCREEN 4 — GAME CANVAS
-         ========================================= -->
+    <!-- Screen: Game -->
     <section class="screen screen--game" id="screenGame">
         <div class="game">
             <header class="game__header">
                 <button class="btn btn--back" id="btnBackToStages">&#8592; Kembali</button>
                 <div class="game__level-info" id="gameLevelInfo"></div>
             </header>
-
-            <!-- Progress soal -->
             <div class="game__progress-bar">
                 <div class="game__progress-track">
                     <div class="game__progress-fill" id="gameProgressFill"></div>
                 </div>
                 <span class="game__progress-text" id="gameProgressText">0 / 5</span>
             </div>
-
-            <!-- Quiz area -->
-            <div class="game__canvas" id="gameCanvas">
-                <!-- Diisi oleh JS: pertanyaan, opsi, feedback, result -->
-            </div>
+            <div class="game__canvas" id="gameCanvas"></div>
         </div>
     </section>
 
 
-    <!-- BGM audio + toggle button (kiri atas) -->
+    <!-- BGM -->
     <audio id="bgmAudio" src="assets/bgm 1.mpeg" loop preload="auto"></audio>
     <button class="bgm-btn" id="bgmBtn" title="Musik On/Off">
         <span class="bgm-btn__icon" id="bgmIcon">&#127925;</span>
     </button>
 
-    <!-- Profile button (kanan atas) -->
+    <!-- Profile button -->
     <button class="profile-btn" id="profileBtn" style="display:none">
         <span class="profile-btn__avatar">&#129490;</span>
         <span class="profile-btn__name" id="profileBtnName"></span>
@@ -373,7 +335,7 @@
         </div>
     </div>
 
-    <!-- Toast notification -->
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script src="js/config.js"></script>
