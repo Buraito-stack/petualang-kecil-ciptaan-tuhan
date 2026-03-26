@@ -449,7 +449,7 @@ var GameEngine = (function () {
             +'  <span class="play-area__stage">Tahap '+n+'/'+tot+' \u2014 '+stageData.title+'</span>'
             +'  <span class="play-area__moves">Langkah: <strong id="moveCount">0 / '+stageData.answerKey.length+'</strong></span>'
             +'</div>'
-            +''
+            +'<div class="play-area__instruction">\uD83D\uDCA1 Tarik panah ke arah peta untuk gerakkan robot menuju '+stageData.goalEmoji+'</div>'
             +gridHTML()
             +'<div class="move-log" id="moveLog"></div>'
             +arrowToolbarHTML()
