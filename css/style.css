@@ -100,15 +100,11 @@
     filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.12));
     margin-bottom: 12px;
 }
-.splash__stars {
-    font-size: 24px;
-    letter-spacing: 8px;
+.splash__sub {
+    font-size: 0.95em;
+    color: var(--text-light);
+    font-style: italic;
     margin-bottom: 20px;
-    animation: splashStars 3s ease-in-out infinite;
-}
-@keyframes splashStars {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
 }
 .splash__tap {
     font-size: 1.1em;
