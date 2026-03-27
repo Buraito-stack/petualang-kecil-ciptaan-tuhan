@@ -521,7 +521,7 @@
     // ── BGM ──
 
     var bgmAudio = $('#bgmAudio');
-    bgmAudio.volume = 0.67;
+    bgmAudio.volume = 0.30;
     var bgmBtn   = $('#bgmBtn');
     var bgmIcon  = $('#bgmIcon');
     var bgmOn    = true;
@@ -680,12 +680,60 @@
             playOpeningAudio();
         }
 
+        // Request fullscreen
+        tryFullscreen();
+
         splash.classList.add('is-hidden');
         setTimeout(function () { splash.remove(); }, 600);
     }
 
     splash.addEventListener('click', dismissSplash);
     splash.addEventListener('touchstart', dismissSplash);
+
+    // ── Fullscreen ──
+
+    var fsBtn = $('#fsBtn');
+
+    function tryFullscreen() {
+        var el = document.documentElement;
+        try {
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        } catch (e) {}
+        syncFsBtn();
+    }
+
+    function exitFullscreen() {
+        try {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+        } catch (e) {}
+        syncFsBtn();
+    }
+
+    function isFullscreen() {
+        return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+    }
+
+    function toggleFs() {
+        if (isFullscreen()) exitFullscreen();
+        else tryFullscreen();
+    }
+
+    function syncFsBtn() {
+        if (!fsBtn) return;
+        setTimeout(function () {
+            fsBtn.querySelector('.fs-btn__icon').textContent = isFullscreen() ? '\u2716' : '\u26F6';
+        }, 100);
+    }
+
+    if (fsBtn) {
+        fsBtn.addEventListener('click', toggleFs);
+        document.addEventListener('fullscreenchange', syncFsBtn);
+        document.addEventListener('webkitfullscreenchange', syncFsBtn);
+    }
 
 
     // ── Init ──
