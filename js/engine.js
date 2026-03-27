@@ -409,7 +409,7 @@ var GameEngine = (function () {
 
         var audio = canvasEl.querySelector('#storyAudio');
         var dubVol = (typeof window.__dubVol === 'number') ? window.__dubVol : 1;
-        if (audio) audio.volume = dubVol;
+        if (audio) audio.volume = Math.min(1, dubVol);
         try { if (audio && dubVol > 0) audio.play(); } catch (e) {}
 
         canvasEl.querySelector('#btnReady').addEventListener('click', stageData.debugMode ? startDebugPlay : startPlay);
