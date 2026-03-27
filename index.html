@@ -324,6 +324,52 @@
         <span class="bgm-btn__icon" id="bgmIcon">&#127925;</span>
     </button>
 
+    <!-- Audio settings popup -->
+    <div class="audio-popup-overlay" id="audioPopup">
+        <div class="audio-popup">
+            <button class="audio-popup__close" id="audioPopupClose">&#10005;</button>
+            <h3 class="audio-popup__title">&#127925; Pengaturan Suara</h3>
+
+            <div class="audio-popup__group">
+                <div class="audio-popup__row">
+                    <span class="audio-popup__label">&#127924; Musik</span>
+                    <div class="audio-popup__controls">
+                        <label class="audio-popup__toggle">
+                            <input type="checkbox" id="audioBgmOn" checked>
+                            <span class="audio-popup__slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <input type="range" class="audio-popup__range" id="audioBgmVol" min="0" max="100" value="36">
+            </div>
+
+            <div class="audio-popup__group">
+                <div class="audio-popup__row">
+                    <span class="audio-popup__label">&#127908; Narasi</span>
+                    <label class="audio-popup__toggle">
+                        <input type="checkbox" id="audioDubOn" checked>
+                        <span class="audio-popup__slider"></span>
+                    </label>
+                </div>
+                <input type="range" class="audio-popup__range" id="audioDubVol" min="0" max="450" value="300">
+                <div class="audio-popup__dub-list" id="dubList"></div>
+            </div>
+
+            <div class="audio-popup__group">
+                <div class="audio-popup__row">
+                    <span class="audio-popup__label">&#128296; Efek Suara</span>
+                    <div class="audio-popup__controls">
+                        <label class="audio-popup__toggle">
+                            <input type="checkbox" id="audioSfxOn" checked>
+                            <span class="audio-popup__slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <input type="range" class="audio-popup__range" id="audioSfxVol" min="0" max="100" value="100">
+            </div>
+        </div>
+    </div>
+
     <!-- Fullscreen toggle -->
     <button class="fs-btn" id="fsBtn" title="Fullscreen">
         <span class="fs-btn__icon">&#9974;</span>

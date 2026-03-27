@@ -477,8 +477,49 @@
         2: $('#dubLevel2'),
     };
 
+    // Boost audio via GainNode (volume > 1.0 possible)
+    var audioCtx = null;
+    var dubGainNodes = {};
+
+    function getAudioCtx() {
+        if (!audioCtx) {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+        }
+        return audioCtx;
+    }
+
+    function setBoostVolume(audioEl, vol) {
+        // vol can be > 1.0 (e.g. 1.5 = 150%)
+        var id = audioEl.id;
+        if (vol <= 1.0) {
+            // Normal volume, no need for gain node
+            audioEl.volume = vol;
+            return;
+        }
+        // Use GainNode for boost
+        var ctx = getAudioCtx();
+        if (!ctx) { audioEl.volume = 1.0; return; }
+        if (!dubGainNodes[id]) {
+            var source = ctx.createMediaElementSource(audioEl);
+            var gain = ctx.createGain();
+            source.connect(gain);
+            gain.connect(ctx.destination);
+            dubGainNodes[id] = gain;
+        }
+        audioEl.volume = 1.0;
+        dubGainNodes[id].gain.value = vol;
+    }
+
+    function getDubVolValue() {
+        return audioSettings.dubOn ? audioSettings.dubVol / 100 : 0;
+    }
+
     function playOpeningAudio() {
-        try { openingAudio.currentTime = 0; openingAudio.play(); } catch (e) {}
+        try {
+            setBoostVolume(openingAudio, getDubVolValue());
+            openingAudio.currentTime = 0;
+            openingAudio.play();
+        } catch (e) {}
     }
 
     function stopOpeningAudio() {
@@ -486,9 +527,14 @@
     }
 
     function playLevelAudio(num) {
-        // Stop yang lain dulu
         for (var k in levelAudios) { try { levelAudios[k].pause(); levelAudios[k].currentTime = 0; } catch (e) {} }
-        try { if (levelAudios[num]) { levelAudios[num].currentTime = 0; levelAudios[num].play(); } } catch (e) {}
+        try {
+            if (levelAudios[num]) {
+                setBoostVolume(levelAudios[num], getDubVolValue());
+                levelAudios[num].currentTime = 0;
+                levelAudios[num].play();
+            }
+        } catch (e) {}
     }
 
     function stopLevelAudio() {
@@ -518,32 +564,196 @@
     }
 
 
-    // ── BGM ──
+    // ── Audio Settings ──
 
     var bgmAudio = $('#bgmAudio');
-    bgmAudio.volume = 0.30;
     var bgmBtn   = $('#bgmBtn');
     var bgmIcon  = $('#bgmIcon');
-    var bgmOn    = true;
-    var BGM_KEY  = 'petualang_bgm';
 
-    try { if (localStorage.getItem(BGM_KEY) === '0') bgmOn = false; } catch (e) {}
+    var audioPopup      = $('#audioPopup');
+    var audioPopupClose = $('#audioPopupClose');
+    var chkBgm   = $('#audioBgmOn');
+    var rngBgm   = $('#audioBgmVol');
+    var chkDub   = $('#audioDubOn');
+    var rngDub   = $('#audioDubVol');
+    var chkSfx   = $('#audioSfxOn');
+    var rngSfx   = $('#audioSfxVol');
 
-    function toggleBgm() {
-        bgmOn = !bgmOn;
-        try { localStorage.setItem(BGM_KEY, bgmOn ? '1' : '0'); } catch (e) {}
-        syncBgm();
+    var AUDIO_KEY = 'petualang_audio';
+
+    // Default settings
+    var audioSettings = { bgmOn: true, bgmVol: 36, dubOn: true, dubVol: 300, sfxOn: true, sfxVol: 100 };
+
+    // Load saved
+    try {
+        var saved = localStorage.getItem(AUDIO_KEY);
+        if (saved) {
+            var parsed = JSON.parse(saved);
+            for (var k in parsed) if (audioSettings.hasOwnProperty(k)) audioSettings[k] = parsed[k];
+        }
+    } catch (e) {}
+
+    function saveAudioSettings() {
+        try { localStorage.setItem(AUDIO_KEY, JSON.stringify(audioSettings)); } catch (e) {}
     }
 
-    function syncBgm() {
-        bgmBtn.classList.toggle('bgm-btn--on', bgmOn);
-        bgmIcon.textContent = bgmOn ? '\uD83C\uDFB5' : '\uD83D\uDD07';
-        if (bgmOn) bgmAudio.play().catch(function () {});
+    function applyAudio() {
+        // BGM
+        bgmAudio.volume = audioSettings.bgmOn ? audioSettings.bgmVol / 100 : 0;
+        if (audioSettings.bgmOn) bgmAudio.play().catch(function () {});
         else bgmAudio.pause();
+        bgmIcon.textContent = audioSettings.bgmOn ? '\uD83C\uDFB5' : '\uD83D\uDD07';
+        bgmBtn.classList.toggle('bgm-btn--on', audioSettings.bgmOn);
+
+        // Dub volume — terapkan ke semua audio narasi
+        var dubVol = audioSettings.dubOn ? audioSettings.dubVol / 100 : 0;
+        openingAudio.volume = dubVol;
+        for (var lk in levelAudios) levelAudios[lk].volume = dubVol;
+
+        // Expose ke engine
+        window.__sfxVol = audioSettings.sfxOn ? audioSettings.sfxVol / 100 : 0;
+        window.__dubVol = dubVol;
+
+        // Sync popup controls
+        chkBgm.checked = audioSettings.bgmOn;
+        rngBgm.value = audioSettings.bgmVol;
+        chkDub.checked = audioSettings.dubOn;
+        rngDub.value = audioSettings.dubVol;
+        chkSfx.checked = audioSettings.sfxOn;
+        rngSfx.value = audioSettings.sfxVol;
     }
 
-    bgmBtn.addEventListener('click', toggleBgm);
-    syncBgm();
+    // BGM button → open popup
+    bgmBtn.addEventListener('click', function () {
+        applyAudio();
+        renderDubList();
+        audioPopup.classList.add('is-active');
+    });
+    audioPopupClose.addEventListener('click', function () { stopActiveDub(); audioPopup.classList.remove('is-active'); });
+    audioPopup.addEventListener('click', function (e) { if (e.target === audioPopup) { stopActiveDub(); audioPopup.classList.remove('is-active'); } });
+
+    // Popup controls
+    chkBgm.addEventListener('change', function () { audioSettings.bgmOn = this.checked; saveAudioSettings(); applyAudio(); });
+    rngBgm.addEventListener('input', function () { audioSettings.bgmVol = +this.value; saveAudioSettings(); applyAudio(); });
+    chkDub.addEventListener('change', function () { audioSettings.dubOn = this.checked; saveAudioSettings(); applyAudio(); });
+    rngDub.addEventListener('input', function () { audioSettings.dubVol = +this.value; saveAudioSettings(); applyAudio(); });
+    chkSfx.addEventListener('change', function () { audioSettings.sfxOn = this.checked; saveAudioSettings(); applyAudio(); });
+    rngSfx.addEventListener('input', function () { audioSettings.sfxVol = +this.value; saveAudioSettings(); applyAudio(); });
+
+    // Dub check list
+    var DUB_FILES = [
+        { name: 'Opening', file: 'Page 1 - Maricel.wav' },
+        { name: 'Level 1 Intro', file: 'Level 1 Maricel.wav' },
+        { name: 'Level 2 Intro', file: 'Level 2 Maricel.wav' },
+        { name: 'Matahari', file: 'Tahap 1 - Matahari.wav' },
+        { name: 'Bulan', file: 'Tahap 2 - Bulan.wav' },
+        { name: 'Bintang', file: 'Tahap 3 - Bintang.wav' },
+        { name: 'Perbaiki Jalan', file: 'Tahap 4 - Perbaiki Jalan.wav' },
+        { name: 'Semua Penerang', file: 'Tahap 5 - Semua Benda Penerang.wav' },
+        { name: 'Air', file: 'Tahap 1 - Air.wav' },
+        { name: 'Sungai', file: 'Tahap 2 - Sungai.wav' },
+        { name: 'Laut', file: 'Tahap 3 - Laut.wav' },
+        { name: 'Semua Air', file: 'Tahap 5 - Kunjungi Semua.wav' },
+    ];
+
+    var dubListEl = $('#dubList');
+    var activeDubAudio = null;
+    var activeDubBtn = null;
+
+    function stopActiveDub() {
+        if (activeDubAudio) { activeDubAudio.pause(); activeDubAudio.currentTime = 0; activeDubAudio = null; }
+        if (activeDubBtn) { activeDubBtn.classList.remove('is-playing'); activeDubBtn.textContent = '\u25B6'; activeDubBtn = null; }
+    }
+
+    // Load per-file volumes
+    var DUB_VOL_KEY = 'petualang_dubvols';
+    var dubVols = {};
+    try { var dv = localStorage.getItem(DUB_VOL_KEY); if (dv) dubVols = JSON.parse(dv); } catch (e) {}
+
+    function saveDubVols() {
+        try { localStorage.setItem(DUB_VOL_KEY, JSON.stringify(dubVols)); } catch (e) {}
+    }
+
+    function getDubVol(idx) {
+        return dubVols[idx] !== undefined ? dubVols[idx] : 100;
+    }
+
+    function renderDubList() {
+        var h = '';
+        for (var i = 0; i < DUB_FILES.length; i++) {
+            var vol = getDubVol(i);
+            h += '<div class="dub-item">'
+               + '<button class="dub-item__play" data-idx="' + i + '">\u25B6</button>'
+               + '<span class="dub-item__name">' + DUB_FILES[i].name + '</span>'
+               + '<span class="dub-item__status" id="dubStatus' + i + '">...</span>'
+               + '</div>'
+               + '<input type="range" class="dub-item__vol" data-idx="' + i + '" min="0" max="100" value="' + vol + '">';
+        }
+        dubListEl.innerHTML = h;
+
+        var btns = dubListEl.querySelectorAll('.dub-item__play');
+        for (var j = 0; j < btns.length; j++) {
+            btns[j].addEventListener('click', (function (idx) {
+                return function () { toggleDubPlay(idx, this); };
+            })(j));
+        }
+
+        // Bind per-file volume sliders
+        var sliders = dubListEl.querySelectorAll('.dub-item__vol');
+        for (var s = 0; s < sliders.length; s++) {
+            sliders[s].addEventListener('input', (function (idx) {
+                return function () {
+                    dubVols[idx] = +this.value;
+                    saveDubVols();
+                    if (activeDubAudio && activeDubBtn && +activeDubBtn.dataset.idx === idx) {
+                        activeDubAudio.volume = calcDubVol(idx);
+                    }
+                };
+            })(+sliders[s].dataset.idx));
+        }
+
+        // Check semua file exist
+        for (var k = 0; k < DUB_FILES.length; k++) {
+            checkDubFile(k);
+        }
+    }
+
+    function checkDubFile(idx) {
+        var statusEl = $('#dubStatus' + idx);
+        var audio = new Audio();
+        audio.addEventListener('canplaythrough', function () {
+            statusEl.textContent = '\u2713';
+            statusEl.className = 'dub-item__status ok';
+        });
+        audio.addEventListener('error', function () {
+            statusEl.textContent = '\u2717';
+            statusEl.className = 'dub-item__status err';
+        });
+        audio.src = 'assets/Dubbing/' + DUB_FILES[idx].file;
+    }
+
+    // Overall dub vol * per-file vol
+    function calcDubVol(idx) {
+        var overall = audioSettings.dubOn ? audioSettings.dubVol / 100 : 0;
+        var perFile = getDubVol(idx) / 100;
+        return overall * perFile;
+    }
+
+    function toggleDubPlay(idx, btn) {
+        if (activeDubBtn === btn) { stopActiveDub(); return; }
+        stopActiveDub();
+
+        activeDubAudio = new Audio('assets/Dubbing/' + DUB_FILES[idx].file);
+        activeDubAudio.volume = calcDubVol(idx);
+        activeDubAudio.play().catch(function () {});
+        activeDubBtn = btn;
+        btn.classList.add('is-playing');
+        btn.textContent = '\u23F9';
+        activeDubAudio.addEventListener('ended', function () { stopActiveDub(); });
+    }
+
+
+    applyAudio();
 
     // Mobile: unlock audio on first user interaction
     var audioUnlocked = false;
@@ -558,7 +768,7 @@
             src.start(0);
         } catch (e) {}
 
-        if (bgmOn && bgmAudio.paused) {
+        if (audioSettings.bgmOn && bgmAudio.paused) {
             bgmAudio.play().then(function () {
                 audioUnlocked = true;
                 removeUnlockListeners();
@@ -629,6 +839,10 @@
         }
     });
 
+    // Dubbing manual play buttons
+    var btnDubOpening = $('#btnDubOpening');
+    if (btnDubOpening) btnDubOpening.addEventListener('click', function () { playOpeningAudio(); });
+
     btnStart.addEventListener('click', goToLevels);
     btnBack.addEventListener('click', goToOpening);
     btnBackToLevels2.addEventListener('click', goToLevels);
@@ -663,7 +877,7 @@
         splashDone = true;
 
         // Play semua audio LANGSUNG di user gesture (bukan setTimeout)
-        if (bgmOn) bgmAudio.play().catch(function () {});
+        if (audioSettings.bgmOn) bgmAudio.play().catch(function () {});
         if (screenOpening.classList.contains('active')) {
             openingAudio.play().catch(function () {});
         }

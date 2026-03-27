@@ -305,8 +305,13 @@ var GameEngine = (function () {
     // ── Sound (Web Audio API) ──
 
     function playSound(type) {
+        var vol = (typeof window.__sfxVol === 'number') ? window.__sfxVol : 1;
+        if (vol <= 0) return;
         try {
             var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var master = ctx.createGain();
+            master.gain.value = vol;
+            master.connect(ctx.destination);
             var t = ctx.currentTime;
 
             if (type === 'step') {
@@ -334,9 +339,11 @@ var GameEngine = (function () {
     }
 
     function playClapFile() {
+        var vol = (typeof window.__sfxVol === 'number') ? window.__sfxVol : 1;
+        if (vol <= 0) return;
         try {
             var a = new Audio('assets/clap hands.m4a');
-            a.volume = 1;
+            a.volume = vol;
             a.play();
         } catch (e) {}
     }
@@ -401,7 +408,9 @@ var GameEngine = (function () {
             + '</div></div>';
 
         var audio = canvasEl.querySelector('#storyAudio');
-        try { if (audio) audio.play(); } catch (e) {}
+        var dubVol = (typeof window.__dubVol === 'number') ? window.__dubVol : 1;
+        if (audio) audio.volume = dubVol;
+        try { if (audio && dubVol > 0) audio.play(); } catch (e) {}
 
         canvasEl.querySelector('#btnReady').addEventListener('click', stageData.debugMode ? startDebugPlay : startPlay);
         canvasEl.querySelector('#btnListen').addEventListener('click', function () {

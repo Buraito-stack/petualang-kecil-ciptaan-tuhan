@@ -1,7 +1,7 @@
 /* ==========================================================
    Petualang Kecil Ciptaan Tuhan — Master Stylesheet
    ==========================================================
-   Target  : Anak-anak (Tablet/iPad first)
+   Target  : Anak-anak 
    Palet   : Pastel cerah (langit biru, hijau rumput)
    Radius  : 30px konsisten
    Shadows : Soft, ramah anak
@@ -586,7 +586,8 @@ body {
 /* ═══════════════════════════
    Guide — Petunjuk Penggunaan
    ═══════════════════════════ */
-.btn--guide {
+.btn--guide,
+.btn--listen-dub {
     padding: 10px 20px;
     background: transparent;
     color: var(--text-mid);
@@ -727,6 +728,215 @@ body {
     opacity: 0.7;
 }
 .bgm-btn:hover { opacity: 1; }
+
+/* Audio settings popup */
+.audio-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.audio-popup-overlay.is-active { display: flex; }
+.audio-popup {
+    background: white;
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    width: 320px;
+    max-width: 90vw;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.2);
+    position: relative;
+}
+.audio-popup__close {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 30px; height: 30px;
+    border: none;
+    background: #FFCDD2;
+    color: #C62828;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.audio-popup__close:hover { background: #EF9A9A; }
+.audio-popup__title {
+    font-size: 1.1em;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+}
+.audio-popup__group {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.audio-popup__group:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.audio-popup__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.audio-popup__label {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+.audio-popup__controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.audio-popup__test {
+    padding: 4px 10px;
+    border: 2px solid var(--pastel-blue);
+    background: white;
+    border-radius: var(--radius-pill);
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--text-mid);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+.audio-popup__test:hover {
+    background: var(--pastel-blue);
+    color: var(--text-dark);
+}
+.audio-popup__test.is-playing {
+    background: var(--pastel-green);
+    border-color: #81C784;
+}
+.audio-popup__dub-list {
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.dub-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: #FAFAFA;
+    border-radius: var(--radius-sm);
+    border: 1px solid #EEEEEE;
+}
+.dub-item__play {
+    width: 28px; height: 28px;
+    border: none;
+    background: var(--pastel-blue);
+    color: var(--text-dark);
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.dub-item__play:hover { background: #90CAF9; }
+.dub-item__play.is-playing { background: var(--pastel-green); }
+.dub-item__name {
+    font-size: 0.78em;
+    color: var(--text-mid);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dub-item__status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.dub-item__status.ok { background: #E8F5E9; color: #2E7D32; }
+.dub-item__status.err { background: #FFEBEE; color: #C62828; }
+.dub-item__vol {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #EEEEEE;
+    border-radius: 2px;
+    outline: none;
+    margin-bottom: 6px;
+}
+.dub-item__vol::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: #90CAF9;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid white;
+}
+.dub-item__vol::-moz-range-thumb {
+    width: 14px; height: 14px;
+    background: #90CAF9;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid white;
+}
+.audio-popup__toggle {
+    position: relative;
+    width: 44px; height: 24px;
+    display: inline-block;
+}
+.audio-popup__toggle input { display: none; }
+.audio-popup__slider {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.audio-popup__slider::before {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    left: 3px; top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+.audio-popup__toggle input:checked + .audio-popup__slider { background: #66BB6A; }
+.audio-popup__toggle input:checked + .audio-popup__slider::before { transform: translateX(20px); }
+.audio-popup__range {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #E0E0E0;
+    border-radius: 3px;
+    outline: none;
+}
+.audio-popup__range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    background: #42A5F5;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.audio-popup__range::-moz-range-thumb {
+    width: 20px; height: 20px;
+    background: #42A5F5;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+}
 
 .fs-btn {
     position: fixed;
