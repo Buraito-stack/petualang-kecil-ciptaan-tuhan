@@ -339,7 +339,7 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: var(--topbar-height);
+    min-height: var(--topbar-height);
     z-index: 50;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
@@ -460,7 +460,17 @@ body {
 
 /* Screen yg butuh topbar */
 .screen--levels,
-.screen--stages,
+.screen--stages {
+    padding-top: calc(var(--topbar-height) + 20px);
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 .screen--game {
     padding-top: calc(var(--topbar-height) + 12px);
     flex-direction: column;
@@ -709,24 +719,29 @@ body {
 /* ═══════════════════════════
    BGM Button (kiri atas)
    ═══════════════════════════ */
-.bgm-btn {
+.bgm-btn,
+.fs-btn {
     position: fixed;
     top: 14px;
-    left: 14px;
     z-index: 60;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    justify-content: center;
+    padding: 0;
     background: white;
     border: 2px solid #E0E0E0;
-    border-radius: var(--radius-pill);
+    border-radius: 50%;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.8em;
     box-shadow: var(--shadow-soft);
     transition: all 0.2s ease;
     opacity: 0.7;
 }
+.bgm-btn { left: 14px; }
+.bgm-btn__icon,
+.fs-btn__icon { font-size: 18px; line-height: 1; }
 .bgm-btn:hover { opacity: 1; }
 
 /* Audio settings popup */
@@ -938,26 +953,7 @@ body {
     border: 2px solid white;
 }
 
-.fs-btn {
-    position: fixed;
-    top: 14px;
-    left: 64px;
-    z-index: 60;
-    display: flex;
-    align-items: center;
-    padding: 10px 12px;
-    background: white;
-    border: 2px solid #E0E0E0;
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.8em;
-    box-shadow: var(--shadow-soft);
-    transition: all 0.2s ease;
-    opacity: 0.7;
-}
-.fs-btn:hover { opacity: 1; }
-.fs-btn__icon { font-size: 16px; }
+.fs-btn { left: 60px; }
 
 .bgm-btn--on {
     border-color: var(--pastel-green);
@@ -2699,12 +2695,16 @@ body {
     /* Profile & BGM buttons tetap fixed top, kecilkan aja */
     .profile-btn { top: 6px; right: 6px; padding: 4px 8px; font-size: 0.7em; gap: 4px; }
     .profile-btn__avatar { font-size: 16px; }
-    .bgm-btn { top: 6px; left: 6px; padding: 6px 8px; }
-    .bgm-btn__icon { font-size: 14px; }
+    .bgm-btn, .fs-btn { top: 6px; width: 34px; height: 34px; }
+    .bgm-btn { left: 6px; }
+    .fs-btn { left: 46px; }
+    .bgm-btn__icon, .fs-btn__icon { font-size: 15px; }
 
     /* Screen padding sesuaikan topbar baru (~58px) */
     :root { --topbar-height: 58px; }
-    .screen { padding: 20px 12px; padding-bottom: 100px; }
+    .screen--levels,
+    .screen--stages { padding-top: calc(var(--topbar-height) + 24px); }
+    .screen--game { padding-top: calc(var(--topbar-height) + 16px); }
 
     .opening__title { font-size: 1.8em; }
     .robot:not(.robot--mini) { transform: scale(0.5); margin: -80px 0; }
