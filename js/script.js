@@ -471,10 +471,10 @@
     var lines = GameConfig.SPEECH_LINES;
 
     // Dubbing audio elements
-    var openingAudio = new Audio('assets/Dubbing/Page 1 - Maricel.wav');
+    var openingAudio = $('#dubOpening');
     var levelAudios = {
-        1: new Audio('assets/Dubbing/Level 1 Maricel.wav'),
-        2: new Audio('assets/Dubbing/Level 2 Maricel.wav'),
+        1: $('#dubLevel1'),
+        2: $('#dubLevel2'),
     };
 
     function playOpeningAudio() {
@@ -662,25 +662,15 @@
         if (splashDone) return;
         splashDone = true;
 
-        // Unlock all audio
-        try {
-            var ctx = new (window.AudioContext || window.webkitAudioContext)();
-            var buf = ctx.createBuffer(1, 1, 22050);
-            var src = ctx.createBufferSource();
-            src.buffer = buf; src.connect(ctx.destination); src.start(0);
-        } catch (e) {}
-
-        // Play BGM + opening dubbing
+        // Play semua audio LANGSUNG di user gesture (bukan setTimeout)
         if (bgmOn) bgmAudio.play().catch(function () {});
+        if (screenOpening.classList.contains('active')) {
+            openingAudio.play().catch(function () {});
+        }
         audioUnlocked = true;
         removeUnlockListeners();
 
-        // Play opening dubbing kalau di opening screen
-        if (screenOpening.classList.contains('active')) {
-            playOpeningAudio();
-        }
-
-        // Request fullscreen
+        // Fullscreen boleh async
         tryFullscreen();
 
         splash.classList.add('is-hidden');
