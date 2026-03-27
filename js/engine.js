@@ -386,7 +386,7 @@ var GameEngine = (function () {
 
     function showStory() {
         var n = stageIdx + 1, tot = GameConfig.getStageCount(currentLevel);
-        var audioSrc = 'assets/audio/' + stageData.audio;
+        var audioSrc = 'assets/' + stageData.audio;
 
         canvasEl.innerHTML =
             '<div class="story-card">'

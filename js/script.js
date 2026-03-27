@@ -300,10 +300,18 @@
         });
     }
 
-    function goToOpening() { GameEngine.destroy(); saveNav('opening'); navigateTo(screenOpening); }
+    function goToOpening() {
+        GameEngine.destroy();
+        stopLevelAudio();
+        saveNav('opening');
+        navigateTo(screenOpening);
+        playOpeningAudio();
+    }
 
     function goToLevels() {
         GameEngine.destroy();
+        stopOpeningAudio();
+        stopLevelAudio();
         activeLevel = null;
         refreshUI();
         saveNav('levels');
@@ -312,12 +320,15 @@
 
     function goToStages(levelNum) {
         activeLevel = levelNum;
+        stopOpeningAudio();
         renderStageSelect(levelNum);
         saveNav('stages', levelNum);
         navigateTo(screenStages);
+        playLevelAudio(levelNum);
     }
 
     function goToGame(levelNum, stageIdx) {
+        stopLevelAudio();
         var levelData = GameConfig.getLevel(levelNum);
         gameLevelInfo.textContent = levelData.title;
         var tot = GameConfig.getStageCount(levelNum);
@@ -459,6 +470,31 @@
     var speechIdx = 0;
     var lines = GameConfig.SPEECH_LINES;
 
+    // Dubbing audio elements
+    var openingAudio = new Audio('assets/Dubbing/Page 1 - Maricel.wav');
+    var levelAudios = {
+        1: new Audio('assets/Dubbing/Level 1 Maricel.wav'),
+        2: new Audio('assets/Dubbing/Level 2 Maricel.wav'),
+    };
+
+    function playOpeningAudio() {
+        try { openingAudio.currentTime = 0; openingAudio.play(); } catch (e) {}
+    }
+
+    function stopOpeningAudio() {
+        try { openingAudio.pause(); openingAudio.currentTime = 0; } catch (e) {}
+    }
+
+    function playLevelAudio(num) {
+        // Stop yang lain dulu
+        for (var k in levelAudios) { try { levelAudios[k].pause(); levelAudios[k].currentTime = 0; } catch (e) {} }
+        try { if (levelAudios[num]) { levelAudios[num].currentTime = 0; levelAudios[num].play(); } } catch (e) {}
+    }
+
+    function stopLevelAudio() {
+        for (var k in levelAudios) { try { levelAudios[k].pause(); levelAudios[k].currentTime = 0; } catch (e) {} }
+    }
+
     function cycleSpeech() {
         setInterval(function () {
             speechIdx = (speechIdx + 1) % lines.length;
@@ -485,6 +521,7 @@
     // ── BGM ──
 
     var bgmAudio = $('#bgmAudio');
+    bgmAudio.volume = 0.67;
     var bgmBtn   = $('#bgmBtn');
     var bgmIcon  = $('#bgmIcon');
     var bgmOn    = true;
@@ -614,6 +651,41 @@
             else if (screenLevels.classList.contains('active')) goToOpening();
         }
     });
+
+
+    // ── Splash ──
+
+    var splash = $('#splash');
+    var splashDone = false;
+
+    function dismissSplash() {
+        if (splashDone) return;
+        splashDone = true;
+
+        // Unlock all audio
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var buf = ctx.createBuffer(1, 1, 22050);
+            var src = ctx.createBufferSource();
+            src.buffer = buf; src.connect(ctx.destination); src.start(0);
+        } catch (e) {}
+
+        // Play BGM + opening dubbing
+        if (bgmOn) bgmAudio.play().catch(function () {});
+        audioUnlocked = true;
+        removeUnlockListeners();
+
+        // Play opening dubbing kalau di opening screen
+        if (screenOpening.classList.contains('active')) {
+            playOpeningAudio();
+        }
+
+        splash.classList.add('is-hidden');
+        setTimeout(function () { splash.remove(); }, 600);
+    }
+
+    splash.addEventListener('click', dismissSplash);
+    splash.addEventListener('touchstart', dismissSplash);
 
 
     // ── Init ──

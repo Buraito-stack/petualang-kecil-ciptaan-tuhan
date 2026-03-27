@@ -45,7 +45,7 @@ var GameConfig = (function () {
                 gridCols: 4, gridRows: 3,
                 startPos: { row: 2, col: 0 },
                 answerKey: ['right','right','right','up','up'],
-                audio: 'level1_matahari.mp3',
+                audio: 'Dubbing/Tahap 1 - Matahari.wav',
             },
 
             // T2: Bulan, 7 langkah, grid 4x4
@@ -57,7 +57,7 @@ var GameConfig = (function () {
                 gridCols: 4, gridRows: 4,
                 startPos: { row: 3, col: 0 },
                 answerKey: ['right','right','up','right','up','up','left'],
-                audio: 'level1_bulan.mp3',
+                audio: 'Dubbing/Tahap 2 - Bulan.wav',
             },
 
             // T3: Bintang, 8 langkah, grid 5x4
@@ -69,7 +69,7 @@ var GameConfig = (function () {
                 gridCols: 5, gridRows: 4,
                 startPos: { row: 3, col: 0 },
                 answerKey: ['right','up','right','up','right','up','right','down'],
-                audio: 'level1_bintang.mp3',
+                audio: 'Dubbing/Tahap 3 - Bintang.wav',
             },
 
             // T4: Debug, 6 langkah, grid 4x3
@@ -81,7 +81,7 @@ var GameConfig = (function () {
                 gridCols: 4, gridRows: 3,
                 startPos: { row: 2, col: 0 },
                 answerKey: ['right','up','up','right','right','down'],
-                audio: 'level1_debug.mp3',
+                audio: 'Dubbing/Tahap 4 - Perbaiki Jalan.wav',
                 debugMode: true,
                 prefill: ['right','up','left','right','right','up'],
             },
@@ -95,7 +95,7 @@ var GameConfig = (function () {
                 gridCols: 6, gridRows: 5,
                 startPos: { row: 4, col: 0 },
                 answerKey: ['right','up','up','right','right','up','up','right','right','down','down','down'],
-                audio: 'level1_final.mp3',
+                audio: 'Dubbing/Tahap 5 - Semua Benda Penerang.wav',
                 checkpoints: [
                     { row: 2, col: 1, emoji: '\u2600\uFE0F' },
                     { row: 0, col: 3, emoji: '\uD83C\uDF19' },
@@ -125,7 +125,7 @@ var GameConfig = (function () {
                 gridCols: 4, gridRows: 3,
                 startPos: { row: 0, col: 0 },
                 answerKey: ['down','down','right','right','right'],
-                audio: 'level2_air.mp3',
+                audio: 'Dubbing/Tahap 1 - Air.wav',
             },
 
             // T2: Sungai, 7 langkah, grid 5x3
@@ -137,7 +137,7 @@ var GameConfig = (function () {
                 gridCols: 5, gridRows: 3,
                 startPos: { row: 0, col: 0 },
                 answerKey: ['right','right','down','right','right','down','left'],
-                audio: 'level2_sungai.mp3',
+                audio: 'Dubbing/Tahap 2 - Sungai.wav',
             },
 
             // T3: Laut, 8 langkah, grid 5x5
@@ -149,7 +149,7 @@ var GameConfig = (function () {
                 gridCols: 5, gridRows: 5,
                 startPos: { row: 0, col: 4 },
                 answerKey: ['left','left','down','down','left','left','down','down'],
-                audio: 'level2_laut.mp3',
+                audio: 'Dubbing/Tahap 3 - Laut.wav',
             },
 
             // T4: Debug, 6 langkah, grid 4x3
@@ -161,7 +161,7 @@ var GameConfig = (function () {
                 gridCols: 4, gridRows: 3,
                 startPos: { row: 0, col: 3 },
                 answerKey: ['left','down','down','left','left','up'],
-                audio: 'level2_debug.mp3',
+                audio: 'Dubbing/Tahap 4 - Perbaiki Jalan.wav',
                 debugMode: true,
                 prefill: ['left','down','right','left','left','down'],
             },
@@ -175,7 +175,7 @@ var GameConfig = (function () {
                 gridCols: 6, gridRows: 5,
                 startPos: { row: 0, col: 0 },
                 answerKey: ['down','down','right','right','down','down','right','right','up','up','right','up'],
-                audio: 'level2_final.mp3',
+                audio: 'Dubbing/Tahap 5 - Kunjungi Semua.wav',
                 checkpoints: [
                     { row: 2, col: 0, emoji: '\uD83D\uDCA7' },
                     { row: 4, col: 2, emoji: '\uD83C\uDFDE\uFE0F' },
