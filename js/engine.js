@@ -800,6 +800,11 @@ var GameEngine = (function () {
             onStageUpdate = cbs.onStageUpdate || null;
         },
         startStage: function (idx) {
+            // Stop audio dari tahap sebelumnya
+            if (canvasEl) {
+                var sa = canvasEl.querySelector('#storyAudio');
+                if (sa) { sa.pause(); sa.currentTime = 0; }
+            }
             stageIdx = idx;
             stageData = GameConfig.getStage(currentLevel, stageIdx);
             if (!stageData) return;
@@ -812,6 +817,11 @@ var GameEngine = (function () {
         destroy: function () {
             killDrag();
             if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+            // Stop story audio kalau masih jalan
+            if (canvasEl) {
+                var sa = canvasEl.querySelector('#storyAudio');
+                if (sa) { sa.pause(); sa.currentTime = 0; }
+            }
             isPlaying = false; isDragging = false; currentLevel = null; stageData = null; moveHistory = [];
         },
         getState: function () {

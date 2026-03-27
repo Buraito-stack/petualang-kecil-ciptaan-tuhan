@@ -477,48 +477,16 @@
         2: $('#dubLevel2'),
     };
 
-    // Boost audio via GainNode (volume > 1.0 possible)
-    var audioCtx = null;
-    var dubGainNodes = {};
-
-    function getAudioCtx() {
-        if (!audioCtx) {
-            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
-        }
-        return audioCtx;
-    }
-
-    function setBoostVolume(audioEl, vol) {
-        // vol can be > 1.0 (e.g. 1.5 = 150%)
-        var id = audioEl.id;
-        if (vol <= 1.0) {
-            // Normal volume, no need for gain node
-            audioEl.volume = vol;
-            return;
-        }
-        // Use GainNode for boost
-        var ctx = getAudioCtx();
-        if (!ctx) { audioEl.volume = 1.0; return; }
-        if (!dubGainNodes[id]) {
-            var source = ctx.createMediaElementSource(audioEl);
-            var gain = ctx.createGain();
-            source.connect(gain);
-            gain.connect(ctx.destination);
-            dubGainNodes[id] = gain;
-        }
-        audioEl.volume = 1.0;
-        dubGainNodes[id].gain.value = vol;
-    }
-
     function getDubVolValue() {
-        return audioSettings.dubOn ? audioSettings.dubVol / 100 : 0;
+        if (!audioSettings.dubOn) return 0;
+        return Math.min(1, audioSettings.dubVol / 100);
     }
 
     function playOpeningAudio() {
         try {
-            setBoostVolume(openingAudio, getDubVolValue());
+            openingAudio.volume = getDubVolValue();
             openingAudio.currentTime = 0;
-            openingAudio.play();
+            openingAudio.play().catch(function () {});
         } catch (e) {}
     }
 
@@ -530,9 +498,9 @@
         for (var k in levelAudios) { try { levelAudios[k].pause(); levelAudios[k].currentTime = 0; } catch (e) {} }
         try {
             if (levelAudios[num]) {
-                setBoostVolume(levelAudios[num], getDubVolValue());
+                levelAudios[num].volume = getDubVolValue();
                 levelAudios[num].currentTime = 0;
-                levelAudios[num].play();
+                levelAudios[num].play().catch(function () {});
             }
         } catch (e) {}
     }
@@ -582,7 +550,7 @@
     var AUDIO_KEY = 'petualang_audio';
 
     // Default settings
-    var audioSettings = { bgmOn: true, bgmVol: 36, dubOn: true, dubVol: 300, sfxOn: true, sfxVol: 100 };
+    var audioSettings = { bgmOn: true, bgmVol: 36, dubOn: true, dubVol: 100, sfxOn: true, sfxVol: 100 };
 
     // Load saved
     try {
@@ -605,10 +573,10 @@
         bgmIcon.textContent = audioSettings.bgmOn ? '\uD83C\uDFB5' : '\uD83D\uDD07';
         bgmBtn.classList.toggle('bgm-btn--on', audioSettings.bgmOn);
 
-        // Dub volume — terapkan ke semua audio narasi (clamp to 0-1 for .volume, boost via GainNode)
-        var dubVol = audioSettings.dubOn ? audioSettings.dubVol / 100 : 0;
-        setBoostVolume(openingAudio, dubVol);
-        for (var lk in levelAudios) setBoostVolume(levelAudios[lk], dubVol);
+        // Dub volume
+        var dubVol = getDubVolValue();
+        openingAudio.volume = dubVol;
+        for (var lk in levelAudios) levelAudios[lk].volume = dubVol;
 
         // Expose ke engine
         window.__sfxVol = audioSettings.sfxOn ? audioSettings.sfxVol / 100 : 0;
