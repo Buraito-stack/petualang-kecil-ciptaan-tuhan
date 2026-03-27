@@ -599,16 +599,16 @@
 
     function applyAudio() {
         // BGM
-        bgmAudio.volume = audioSettings.bgmOn ? audioSettings.bgmVol / 100 : 0;
+        bgmAudio.volume = audioSettings.bgmOn ? Math.min(1, audioSettings.bgmVol / 100) : 0;
         if (audioSettings.bgmOn) bgmAudio.play().catch(function () {});
         else bgmAudio.pause();
         bgmIcon.textContent = audioSettings.bgmOn ? '\uD83C\uDFB5' : '\uD83D\uDD07';
         bgmBtn.classList.toggle('bgm-btn--on', audioSettings.bgmOn);
 
-        // Dub volume — terapkan ke semua audio narasi
+        // Dub volume — terapkan ke semua audio narasi (clamp to 0-1 for .volume, boost via GainNode)
         var dubVol = audioSettings.dubOn ? audioSettings.dubVol / 100 : 0;
-        openingAudio.volume = dubVol;
-        for (var lk in levelAudios) levelAudios[lk].volume = dubVol;
+        setBoostVolume(openingAudio, dubVol);
+        for (var lk in levelAudios) setBoostVolume(levelAudios[lk], dubVol);
 
         // Expose ke engine
         window.__sfxVol = audioSettings.sfxOn ? audioSettings.sfxVol / 100 : 0;
@@ -706,7 +706,7 @@
                     dubVols[idx] = +this.value;
                     saveDubVols();
                     if (activeDubAudio && activeDubBtn && +activeDubBtn.dataset.idx === idx) {
-                        activeDubAudio.volume = calcDubVol(idx);
+                        activeDubAudio.volume = Math.min(1, calcDubVol(idx));
                     }
                 };
             })(+sliders[s].dataset.idx));
@@ -744,7 +744,7 @@
         stopActiveDub();
 
         activeDubAudio = new Audio('assets/Dubbing/' + DUB_FILES[idx].file);
-        activeDubAudio.volume = calcDubVol(idx);
+        activeDubAudio.volume = Math.min(1, calcDubVol(idx));
         activeDubAudio.play().catch(function () {});
         activeDubBtn = btn;
         btn.classList.add('is-playing');
@@ -876,43 +876,52 @@
         if (splashDone) return;
         splashDone = true;
 
-        // Play semua audio LANGSUNG di user gesture (bukan setTimeout)
-        if (audioSettings.bgmOn) bgmAudio.play().catch(function () {});
-        if (screenOpening.classList.contains('active')) {
-            openingAudio.play().catch(function () {});
-        }
-        audioUnlocked = true;
-        removeUnlockListeners();
-
-        // Fullscreen boleh async
-        tryFullscreen();
-
+        // Dismiss splash DULU — apapun yang terjadi, splash harus hilang
         splash.classList.add('is-hidden');
-        setTimeout(function () { splash.remove(); }, 600);
+        setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 600);
+
+        // Audio unlock (boleh gagal)
+        try {
+            if (audioSettings.bgmOn) bgmAudio.play().catch(function () {});
+            if (screenOpening.classList.contains('active')) openingAudio.play().catch(function () {});
+            audioUnlocked = true;
+            removeUnlockListeners();
+        } catch (e) {}
+
+        // Fullscreen (boleh gagal)
+        try { tryFullscreen(); } catch (e) {}
     }
 
-    splash.addEventListener('click', dismissSplash);
-    splash.addEventListener('touchstart', dismissSplash);
+    if (splash) {
+        splash.addEventListener('click', dismissSplash);
+        splash.addEventListener('touchstart', function (e) { e.preventDefault(); dismissSplash(); });
+    }
 
     // ── Fullscreen ──
 
     var fsBtn = $('#fsBtn');
 
+    var fsSupported = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen || document.documentElement.msRequestFullscreen);
+
     function tryFullscreen() {
+        if (!fsSupported) return;
         var el = document.documentElement;
         try {
-            if (el.requestFullscreen) el.requestFullscreen();
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-            else if (el.msRequestFullscreen) el.msRequestFullscreen();
+            var p = el.requestFullscreen ? el.requestFullscreen()
+                  : el.webkitRequestFullscreen ? el.webkitRequestFullscreen()
+                  : el.msRequestFullscreen ? el.msRequestFullscreen() : null;
+            // Catch promise rejection (beberapa browser return rejected promise)
+            if (p && p.catch) p.catch(function () {});
         } catch (e) {}
         syncFsBtn();
     }
 
     function exitFullscreen() {
         try {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            else if (document.msExitFullscreen) document.msExitFullscreen();
+            var p = document.exitFullscreen ? document.exitFullscreen()
+                  : document.webkitExitFullscreen ? document.webkitExitFullscreen()
+                  : document.msExitFullscreen ? document.msExitFullscreen() : null;
+            if (p && p.catch) p.catch(function () {});
         } catch (e) {}
         syncFsBtn();
     }
@@ -929,7 +938,13 @@
     function syncFsBtn() {
         if (!fsBtn) return;
         setTimeout(function () {
-            fsBtn.querySelector('.fs-btn__icon').textContent = isFullscreen() ? '\u2716' : '\u26F6';
+            if (fsSupported) {
+                fsBtn.style.display = '';
+                fsBtn.querySelector('.fs-btn__icon').textContent = isFullscreen() ? '\u2716' : '\u26F6';
+            } else {
+                // Browser ga support fullscreen — sembunyiin tombol
+                fsBtn.style.display = 'none';
+            }
         }, 100);
     }
 
@@ -937,6 +952,7 @@
         fsBtn.addEventListener('click', toggleFs);
         document.addEventListener('fullscreenchange', syncFsBtn);
         document.addEventListener('webkitfullscreenchange', syncFsBtn);
+        syncFsBtn();
     }
 
 
