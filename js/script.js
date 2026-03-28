@@ -445,9 +445,11 @@
         if (allDone) {
             setTimeout(function () {
                 GameEngine.showLevelComplete(stars);
+                playLevelCompleteAudio();
                 gameCanvas.addEventListener('click', function handler(e) {
                     if (e.target.id === 'btnMau' || e.target.id === 'btnNanti') {
                         gameCanvas.removeEventListener('click', handler);
+                        stopLevelCompleteAudio();
                         goToLevels();
                     }
                 });
@@ -507,6 +509,19 @@
 
     function stopLevelAudio() {
         for (var k in levelAudios) { try { levelAudios[k].pause(); levelAudios[k].currentTime = 0; } catch (e) {} }
+    }
+
+    var levelCompleteAudio = null;
+    function playLevelCompleteAudio() {
+        try {
+            if (levelCompleteAudio) { levelCompleteAudio.pause(); levelCompleteAudio = null; }
+            levelCompleteAudio = new Audio('assets/Dubbing/Level Complete - Maricel.mp3');
+            levelCompleteAudio.volume = getDubVolValue();
+            levelCompleteAudio.play().catch(function () {});
+        } catch (e) {}
+    }
+    function stopLevelCompleteAudio() {
+        try { if (levelCompleteAudio) { levelCompleteAudio.pause(); levelCompleteAudio = null; } } catch (e) {}
     }
 
     function cycleSpeech() {
@@ -622,6 +637,7 @@
         { name: 'Sungai', file: 'Tahap 2 - Sungai.wav' },
         { name: 'Laut', file: 'Tahap 3 - Laut.wav' },
         { name: 'Semua Air', file: 'Tahap 5 - Kunjungi Semua.wav' },
+        { name: 'Level Complete', file: 'Level Complete - Maricel.mp3' },
     ];
 
     var dubListEl = $('#dubList');
