@@ -116,6 +116,17 @@
     0%, 100% { opacity: 0.4; transform: translateY(0); }
     50% { opacity: 1; transform: translateY(-3px); }
 }
+.splash__credit {
+    position: absolute;
+    bottom: 24px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 0.8em;
+    color: var(--text-light);
+    opacity: 0.6;
+    letter-spacing: 0.3px;
+}
 
 /* Opening entrance animations */
 .screen--opening .opening__title {
