@@ -14,7 +14,13 @@
             <div class="splash__emoji">&#129302;</div>
             <h1 class="splash__title">Petualang Kecil<br>Ciptaan Tuhan</h1>
             <p class="splash__tap">Tap untuk mulai bermain</p>
-            <p class="splash__credit">Nyoman Ayu Trisha Angela, S. Psi.</p>
+            <div class="splash__profile">
+                <img class="splash__photo" src="assets/foto-pengembang.jpeg" alt="Foto Pengembang">
+                <div class="splash__profile-info">
+                    <p class="splash__credit">Nyoman Ayu Trisha Angela, S. Psi.</p>
+                    <p class="splash__school">TK Ganadara Preschool</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -148,8 +154,24 @@
                 Mulai Petualangan <span class="btn__arrow">&#10132;</span>
             </button>
             <button class="btn btn--guide" id="btnGuideOpen">&#10068; Cara Bermain</button>
+            <button class="btn btn--guide" id="btnProfileDev">&#128100; Profil Pengembang</button>
         </div>
     </section>
+
+    <!-- Screen: Profil Pengembang (fullscreen) -->
+    <div class="devprofile-overlay" id="devprofileOverlay">
+        <button class="devprofile__back" id="devprofileClose">&#8592; Kembali</button>
+        <h2 class="devprofile__heading">Profil Pengembang</h2>
+        <div class="devprofile__layout">
+            <div class="devprofile__photo-wrap">
+                <img class="devprofile__photo" src="assets/foto-pengembang.jpeg" alt="Foto Pengembang">
+            </div>
+            <div class="devprofile__info">
+                <h3 class="devprofile__name">Nyoman Ayu Trisha Angela, S. Psi.</h3>
+                <p class="devprofile__school">TK Ganadara Preschool</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Popup: Petunjuk -->
     <div class="guide-overlay" id="guideOverlay">

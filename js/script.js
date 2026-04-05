@@ -798,6 +798,17 @@
     guideOverlay.addEventListener('click', function (e) { if (e.target === guideOverlay) guideOverlay.classList.remove('is-active'); });
 
 
+    // ── Profil Pengembang ──
+
+    var devOverlay = document.getElementById('devprofileOverlay');
+    var btnDev = document.getElementById('btnProfileDev');
+    var btnDevClose = document.getElementById('devprofileClose');
+    if (btnDev && devOverlay) {
+        btnDev.addEventListener('click', function () { devOverlay.classList.add('is-active'); });
+        if (btnDevClose) btnDevClose.addEventListener('click', function () { devOverlay.classList.remove('is-active'); });
+    }
+
+
     // ── Event Bindings ──
 
     btnFirstReg.addEventListener('click', function () {

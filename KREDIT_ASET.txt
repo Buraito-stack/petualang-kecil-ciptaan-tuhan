@@ -1,0 +1,28 @@
+KREDIT & SUMBER ASET
+Petualang Kecil Ciptaan Tuhan
+========================================
+
+Profil Pengembang:
+  Nyoman Ayu Trisha Angela, S. Psi.
+  TK Ganadara Preschool
+
+Narasi suara (Dubbing):
+  Rekaman original
+
+Musik latar (BGM):
+  Komposisi original
+
+Foto pengembang (foto-pengembang.jpeg):
+  Foto original
+
+Karakter robot, animasi, & kode program:
+  Dibuat dengan bantuan AI (Claude, Anthropic)
+
+Emoji & ikon:
+  System emoji bawaan perangkat
+
+Efek suara interaktif (kling, langkah, dll):
+  Dihasilkan via Web Audio API
+
+Efek tepuk tangan (clap hands.m4a):
+  Royalty-free / tanpa hak cipta
