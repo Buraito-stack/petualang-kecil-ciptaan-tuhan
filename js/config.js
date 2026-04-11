@@ -116,70 +116,70 @@ var GameConfig = (function () {
         icons: ['\uD83D\uDCA7', '\uD83C\uDFDE\uFE0F', '\uD83C\uDF0A'],
         stages: [
 
-            // T1: Air, 7 langkah, grid 4x4
-            // S(0,0) → d r d r d d r → G(3,3)
+            // T1: Air, 5 langkah, grid 4x3
+            // S(0,0) → d d r r r → G(2,3)
             {
                 id: 'l2_t1', title: 'Air',
                 goalEmoji: '\uD83D\uDCA7',
                 story: 'Air penting untuk kehidupan \uD83D\uDCA7',
-                gridCols: 4, gridRows: 4,
+                gridCols: 4, gridRows: 3,
                 startPos: { row: 0, col: 0 },
-                answerKey: ['down','right','down','right','down','down','right'],
+                answerKey: ['down','down','right','right','right'],
                 audio: 'Dubbing/Tahap 1 - Air.wav',
             },
 
-            // T2: Sungai, 9 langkah, grid 5x4
-            // S(0,0) → r r d d r r d l l → G(3,2)
+            // T2: Sungai, 7 langkah, grid 5x3
+            // S(0,0) → r r d r r d l → G(2,3)
             {
                 id: 'l2_t2', title: 'Sungai',
                 goalEmoji: '\uD83C\uDFDE\uFE0F',
                 story: 'Sungai adalah air yang mengalir \uD83C\uDFDE\uFE0F',
-                gridCols: 5, gridRows: 4,
+                gridCols: 5, gridRows: 3,
                 startPos: { row: 0, col: 0 },
-                answerKey: ['right','right','down','down','right','right','down','left','left'],
+                answerKey: ['right','right','down','right','right','down','left'],
                 audio: 'Dubbing/Tahap 2 - Sungai.wav',
             },
 
-            // T3: Laut, 10 langkah, grid 5x5
-            // S(0,4) → l d l d d l d l l u → G(3,0)
+            // T3: Laut, 8 langkah, grid 5x5
+            // S(0,4) → l l d d l l d d → G(4,0)
             {
                 id: 'l2_t3', title: 'Laut',
                 goalEmoji: '\uD83C\uDF0A',
                 story: 'Laut sangat luas \uD83C\uDF0A',
                 gridCols: 5, gridRows: 5,
                 startPos: { row: 0, col: 4 },
-                answerKey: ['left','down','left','down','down','left','down','left','left','up'],
+                answerKey: ['left','left','down','down','left','left','down','down'],
                 audio: 'Dubbing/Tahap 3 - Laut.wav',
             },
 
-            // T4: Debug, 8 langkah, grid 5x4
-            // S(0,4) → l l d d l l d r → G(3,1)
+            // T4: Debug, 6 langkah, grid 4x3
+            // S(0,3) → l d d l l u → G(1,0)
             {
                 id: 'l2_t4', title: 'Perbaiki Jalan',
                 goalEmoji: '\uD83D\uDD27',
                 story: 'Ada yang salah di jalannya! Cari dan perbaiki panah yang salah!',
-                gridCols: 5, gridRows: 4,
-                startPos: { row: 0, col: 4 },
-                answerKey: ['left','left','down','down','left','left','down','right'],
+                gridCols: 4, gridRows: 3,
+                startPos: { row: 0, col: 3 },
+                answerKey: ['left','down','down','left','left','up'],
                 audio: 'Dubbing/Tahap 4 - Perbaiki Jalan.wav',
                 debugMode: true,
-                prefill: ['left','right','down','down','left','left','up','right'],
+                prefill: ['left','down','right','left','left','down'],
             },
 
-            // T5: Final, 14 langkah, grid 6x5
-            // S(0,0) → d d r u r r d d d r r u u u → G(0,5)
+            // T5: Final, 12 langkah, grid 6x5
+            // S(0,0) → d d r r d d r r u u r u → G(1,5)
             {
                 id: 'l2_t5', title: 'Kunjungi Semua!',
                 goalEmoji: '\uD83C\uDF1F',
                 story: 'Ayo kunjungi air, sungai, dan laut! \uD83D\uDCA7\uD83C\uDFDE\uFE0F\uD83C\uDF0A',
                 gridCols: 6, gridRows: 5,
                 startPos: { row: 0, col: 0 },
-                answerKey: ['down','down','right','up','right','right','down','down','down','right','right','up','up','up'],
+                answerKey: ['down','down','right','right','down','down','right','right','up','up','right','up'],
                 audio: 'Dubbing/Tahap 5 - Kunjungi Semua.wav',
                 checkpoints: [
                     { row: 2, col: 0, emoji: '\uD83D\uDCA7' },
-                    { row: 4, col: 3, emoji: '\uD83C\uDFDE\uFE0F' },
-                    { row: 1, col: 5, emoji: '\uD83C\uDF0A' },
+                    { row: 4, col: 2, emoji: '\uD83C\uDFDE\uFE0F' },
+                    { row: 2, col: 4, emoji: '\uD83C\uDF0A' },
                 ],
             },
         ],
