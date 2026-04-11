@@ -888,8 +888,13 @@
     }
 
     if (splash) {
-        splash.addEventListener('click', dismissSplash);
-        splash.addEventListener('touchstart', function (e) { e.preventDefault(); dismissSplash(); });
+        var splashBtn = splash.querySelector('.splash__start-btn');
+        if (splashBtn) {
+            splashBtn.addEventListener('click', dismissSplash);
+            splashBtn.addEventListener('touchstart', function (e) { e.preventDefault(); dismissSplash(); });
+        } else {
+            splash.addEventListener('click', dismissSplash);
+        }
     }
 
     // ── Fullscreen ──
