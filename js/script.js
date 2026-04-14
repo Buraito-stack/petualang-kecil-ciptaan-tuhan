@@ -631,12 +631,14 @@
         { name: 'Matahari', file: 'Tahap 1 - Matahari.wav' },
         { name: 'Bulan', file: 'Tahap 2 - Bulan.wav' },
         { name: 'Bintang', file: 'Tahap 3 - Bintang.wav' },
-        { name: 'Perbaiki Jalan', file: 'Tahap 4 - Perbaiki Jalan.wav' },
+        { name: 'Perbaiki Jalan (L1)', file: 'Tahap 4 - Perbaiki Jalan.wav' },
         { name: 'Semua Penerang', file: 'Tahap 5 - Semua Benda Penerang.wav' },
         { name: 'Air', file: 'Tahap 1 - Air.wav' },
         { name: 'Sungai', file: 'Tahap 2 - Sungai.wav' },
         { name: 'Laut', file: 'Tahap 3 - Laut.wav' },
+        { name: 'Perbaiki Jalan (L2)', file: 'Tahap 4 - Perbaiki Jalan v2.mp4' },
         { name: 'Semua Air', file: 'Tahap 5 - Kunjungi Semua.wav' },
+        { name: 'Briefing Level 2', file: 'Briefing Level 2.mp4' },
         { name: 'Level Complete', file: 'Level Complete - Maricel.mp3' },
     ];
 

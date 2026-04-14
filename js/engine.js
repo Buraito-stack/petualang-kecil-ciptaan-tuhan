@@ -609,10 +609,27 @@ var GameEngine = (function () {
             + '  <h3 class="briefing__title">Di peta ini ada:</h3>'
             + '</div>'
             + '<ul class="briefing__list">' + items + '</ul>'
-            + '<button class="btn btn--play btn--play-yellow" id="btnBriefingGo">Mulai Petualangan \u2794</button>'
+            + '<audio id="briefingAudio" src="assets/Dubbing/Briefing Level 2.mp4" preload="auto"></audio>'
+            + '<div class="briefing__btns">'
+            + '  <button class="btn btn--play btn--play-yellow" id="btnBriefingGo">Mulai Petualangan \u2794</button>'
+            + '  <button class="btn btn--listen" id="btnBriefingListen">\uD83D\uDD0A Dengar lagi</button>'
+            + '</div>'
             + '</div>';
 
-        canvasEl.querySelector('#btnBriefingGo').addEventListener('click', startPlay);
+        var briefAudio = canvasEl.querySelector('#briefingAudio');
+        var dubVol = (typeof window.__dubVol === 'number') ? window.__dubVol : 1;
+        if (briefAudio) {
+            briefAudio.volume = Math.min(1, dubVol);
+            try { if (dubVol > 0) briefAudio.play(); } catch (e) {}
+        }
+
+        canvasEl.querySelector('#btnBriefingGo').addEventListener('click', function () {
+            try { if (briefAudio) { briefAudio.pause(); briefAudio.currentTime = 0; } } catch (e) {}
+            startPlay();
+        });
+        canvasEl.querySelector('#btnBriefingListen').addEventListener('click', function () {
+            if (briefAudio) { briefAudio.currentTime = 0; briefAudio.play(); }
+        });
     }
 
 

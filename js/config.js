@@ -214,7 +214,7 @@ var GameConfig = (function () {
                     { row: 1, col: 0, type: 'bad', emoji: '\uD83C\uDF00' },
                     { row: 2, col: 1, type: 'bad', emoji: '\uD83C\uDF00' },
                 ],
-                audio: 'Dubbing/Tahap 4 - Perbaiki Jalan.wav',
+                audio: 'Dubbing/Tahap 4 - Perbaiki Jalan v2.mp4',
                 debugMode: true,
                 prefill: ['right','up','left','down','up'],
             },

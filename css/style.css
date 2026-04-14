@@ -355,16 +355,28 @@ body {
 @keyframes driftRight { from { left: -280px; } to { left: 110%; } }
 @keyframes driftLeft  { from { left: 110%;   } to { left: -220px; } }
 
-/* ── Burung ── */
+/* ── Burung emoji dgn kepak sayap (fake via scaleY) ── */
 .bird {
     position: absolute;
-    font-size: 18px;
-    opacity: 0.50;
-    color: var(--text-mid);
+    font-size: 20px;
+    opacity: 0.7;
+    pointer-events: none;
 }
-.bird--1 { top:  80px; animation: birdFly 18s linear infinite; }
-.bird--2 { top: 130px; animation: birdFly 22s linear infinite -6s;  font-size: 14px; }
-.bird--3 { top: 170px; animation: birdFly 26s linear infinite -13s; font-size: 12px; }
+.bird::before {
+    content: '\1F426';
+    display: inline-block;
+    animation: birdFlap 0.35s ease-in-out infinite;
+}
+@keyframes birdFlap {
+    0%, 100% { transform: scaleY(1); }
+    50%      { transform: scaleY(0.7); }
+}
+
+.bird--1 { top:  80px; font-size: 22px; animation: birdFly 18s linear infinite; }
+.bird--2 { top: 130px; font-size: 16px; animation: birdFly 22s linear infinite -6s; }
+.bird--3 { top: 170px; font-size: 14px; animation: birdFly 26s linear infinite -13s; }
+.bird--2::before { animation-duration: 0.4s; }
+.bird--3::before { animation-duration: 0.5s; }
 
 @keyframes birdFly { from { left: -40px; } to { left: 105%; } }
 
