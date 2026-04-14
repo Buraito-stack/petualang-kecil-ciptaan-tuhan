@@ -221,7 +221,7 @@
 .screen--opening .btn--start {
     animation: openFadeUp 0.7s var(--ease-out) 0.6s both;
 }
-.screen--opening .btn--guide {
+.screen--opening .btn--guide:not(.btn--corner-left):not(.btn--corner-right) {
     animation: openFadeUp 0.6s var(--ease-out) 0.75s both;
 }
 @keyframes openFadeUp {
@@ -706,6 +706,25 @@ body {
     transform: translateY(-2px);
     box-shadow: var(--shadow-card);
     border-color: var(--pastel-blue);
+}
+
+/* Corner buttons — MUST come after .btn--guide for override */
+.btn--guide.btn--corner-left,
+.btn--guide.btn--corner-right {
+    position: absolute;
+    bottom: 40px;
+    z-index: 30;
+}
+.btn--guide.btn--corner-left { left: 40px; right: auto; }
+.btn--guide.btn--corner-right { right: 40px; left: auto; }
+
+@media (max-width: 700px) {
+    .btn--guide.btn--corner-left,
+    .btn--guide.btn--corner-right {
+        bottom: 20px;
+    }
+    .btn--guide.btn--corner-left { left: 16px; }
+    .btn--guide.btn--corner-right { right: 16px; }
 }
 
 .guide-overlay {
@@ -2294,6 +2313,59 @@ body {
 
 
 /* ═══════════════════════════
+   Briefing (popup penjelasan trap/obstacle)
+   ═══════════════════════════ */
+.briefing {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 20px 26px;
+    text-align: center;
+}
+.briefing__header {
+    margin-bottom: 18px;
+}
+.briefing__badge {
+    display: inline-block;
+    padding: 4px 16px;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+    font-size: 0.85em;
+    font-weight: 700;
+    border-radius: var(--radius-pill);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.briefing__title {
+    font-size: 1.25em;
+    color: var(--text-dark);
+}
+.briefing__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    margin-bottom: 20px;
+}
+.briefing__list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #FFF8E1;
+    border-radius: var(--radius-sm);
+    font-size: 0.92em;
+    color: var(--text-mid);
+    line-height: 1.45;
+}
+.briefing__icon {
+    font-size: 1.6em;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* ═══════════════════════════
    Story Card (sebelum bermain)
    ═══════════════════════════ */
 .story-card {
@@ -2377,6 +2449,11 @@ body {
     border-radius: var(--radius-pill);
     text-align: center;
     margin-bottom: 4px;
+}
+.play-area__instruction--warn {
+    background: #FFCDD2;
+    color: #B71C1C;
+    border: 2px dashed #E57373;
 }
 .play-area__moves {
     font-size: 13px;
@@ -2479,6 +2556,57 @@ body {
     background: linear-gradient(145deg, #78909C, #607D8B);
     border: 3px solid #546E7A;
     opacity: 0.5;
+}
+
+/* === OPEN: cell netral untuk mode freeRoam === */
+.slot--open {
+    background: linear-gradient(145deg, #FAFAFA, #EEEEEE);
+    border: 3px solid #E0E0E0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* === OBSTACLE: batu penghalang (tidak bisa dilewati) === */
+.slot--obstacle {
+    background: linear-gradient(145deg, #BCAAA4, #8D6E63);
+    border: 3px solid #6D4C41;
+    opacity: 1;
+    position: relative;
+}
+.slot--obstacle .slot__label {
+    font-size: 1.8em;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.slot--obstacle::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), transparent 60%);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* === TRAP: help (bantu) & bad (jahat) === */
+.slot--trap { position: relative; }
+.slot--trap .slot__label {
+    font-size: 1.6em;
+    animation: trapPulse 1.5s ease-in-out infinite;
+}
+.slot--trap-help {
+    background: linear-gradient(145deg, #B3E5FC, #4FC3F7);
+    border: 3px solid #29B6F6;
+    box-shadow: 0 0 14px rgba(41, 182, 246, 0.5);
+}
+.slot--trap-bad {
+    background: linear-gradient(145deg, #5E35B1, #311B92);
+    border: 3px solid #1A237E;
+    box-shadow: 0 0 14px rgba(26, 35, 126, 0.5);
+}
+.slot--trap-bad .slot__label {
+    filter: drop-shadow(0 0 4px rgba(255,255,255,0.8));
+}
+@keyframes trapPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
 }
 
 /* === START: posisi awal robot === */

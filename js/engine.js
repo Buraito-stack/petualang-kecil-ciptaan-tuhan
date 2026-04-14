@@ -12,6 +12,8 @@ var GameEngine = (function () {
     var stageData   = null;
     var robotPos    = null;
     var moveHistory = [];
+    var manualMoveCount = 0;
+    var visitedCheckpoints = {};
     var pathCells   = null;
     var isPlaying   = false;
 
@@ -78,29 +80,65 @@ var GameEngine = (function () {
         return null;
     }
 
+    function isObstacle(r, c) {
+        if (!stageData.obstacles) return false;
+        for (var i = 0; i < stageData.obstacles.length; i++) {
+            var o = stageData.obstacles[i];
+            if (o.row === r && o.col === c) return true;
+        }
+        return false;
+    }
+
+    function getTrap(r, c) {
+        if (!stageData.traps) return null;
+        for (var i = 0; i < stageData.traps.length; i++) {
+            var t = stageData.traps[i];
+            if (t.row === r && t.col === c) return t;
+        }
+        return null;
+    }
+
+    function isFreeRoam() {
+        return stageData && stageData.freeRoam === true;
+    }
+
     function gridHTML() {
-        buildPath();
-        var cols = stageData.gridCols, rows = stageData.gridRows, g = goalPos();
-        var h = '<div class="grid" id="eGrid" style="grid-template-columns:repeat(' + cols + ',var(--cell));grid-template-rows:repeat(' + rows + ',var(--cell));">';
+        var freeMode = isFreeRoam();
+        if (!freeMode) buildPath();
+        var cols = stageData.gridCols, rows = stageData.gridRows;
+        var g = freeMode ? stageData.goalPos : goalPos();
+        var gridCls = 'grid' + (freeMode ? ' grid--freeroam' : '');
+        var h = '<div class="' + gridCls + '" id="eGrid" style="grid-template-columns:repeat(' + cols + ',var(--cell));grid-template-rows:repeat(' + rows + ',var(--cell));">';
 
         for (var r = 0; r < rows; r++) {
             for (var c = 0; c < cols; c++) {
                 var isS = (r === stageData.startPos.row && c === stageData.startPos.col);
                 var isG = (g && r === g.row && c === g.col);
-                var onP = pathCells[r + ',' + c];
+                var onP = !freeMode && pathCells[r + ',' + c];
                 var cpEmoji = getCheckpointEmoji(r, c);
+                var isObs = isObstacle(r, c);
+                var trap = getTrap(r, c);
 
                 var cls = 'slot'
-                    + (onP ? ' slot--path' : ' slot--wall')
+                    + (freeMode ? ' slot--open' : (onP ? ' slot--path' : ' slot--wall'))
+                    + (isObs ? ' slot--obstacle' : '')
+                    + (trap ? ' slot--trap slot--trap-' + trap.type : '')
                     + (isS ? ' slot--start slot--robot' : '')
                     + (isG ? ' slot--goal' : '')
                     + (cpEmoji ? ' slot--checkpoint' : '');
 
-                var lbl = isS ? cfg.robotEmoji : isG ? stageData.goalEmoji : (cpEmoji || '');
+                var lbl = isS ? cfg.robotEmoji
+                        : isG ? stageData.goalEmoji
+                        : isObs ? '\uD83E\uDEA8'
+                        : trap ? trap.emoji
+                        : (cpEmoji || '');
+
+                var extraAttr = '';
+                if (cpEmoji) extraAttr += ' data-cp="' + cpEmoji + '"';
+                if (trap) extraAttr += ' data-trap="' + trap.type + '"';
 
                 h += '<div class="' + cls + '" data-row="' + r + '" data-col="' + c + '"'
-                   + (cpEmoji ? ' data-cp="' + cpEmoji + '"' : '')
-                   + '><span class="slot__label">' + lbl + '</span></div>';
+                   + extraAttr + '><span class="slot__label">' + lbl + '</span></div>';
             }
         }
         return h + '</div>';
@@ -213,7 +251,13 @@ var GameEngine = (function () {
             case 'left': c--; break; case 'right': c++; break;
         }
         var el = slotEl(r, c);
-        if (el && el.classList.contains('slot--path') && !el.classList.contains('slot--visited')) return el;
+        if (!el) return null;
+        if (el.classList.contains('slot--obstacle')) return null;
+        if (isFreeRoam()) {
+            // freeRoam: cell manapun kecuali batu, allow re-visit
+            return el;
+        }
+        if (el.classList.contains('slot--path') && !el.classList.contains('slot--visited')) return el;
         return null;
     }
 
@@ -225,8 +269,50 @@ var GameEngine = (function () {
             return;
         }
         moveHistory.push(dir);
-        snapTo(+dest.dataset.row, +dest.dataset.col);
+        manualMoveCount++;
+        var dr = +dest.dataset.row, dc = +dest.dataset.col;
+        snapTo(dr, dc);
+
+        // Trap detection (freeRoam only)
+        if (isFreeRoam()) {
+            var trap = getTrap(dr, dc);
+            if (trap) {
+                if (trap.type === 'bad') {
+                    isPlaying = false;
+                    setTimeout(showWrong, 600);
+                    return;
+                }
+                if (trap.type === 'help') {
+                    isPlaying = false;
+                    autoBoost(trap.direction, trap.distance);
+                    return;
+                }
+            }
+        }
         checkDone();
+    }
+
+    function autoBoost(dir, count) {
+        var i = 0;
+        function step() {
+            if (i >= count) {
+                isPlaying = true;
+                checkDone();
+                return;
+            }
+            var d = getDestCell(dir);
+            if (!d) {
+                isPlaying = true;
+                checkDone();
+                return;
+            }
+            moveHistory.push(dir);
+            // Tidak increment manualMoveCount — ini bonus gratis
+            snapTo(+d.dataset.row, +d.dataset.col);
+            i++;
+            setTimeout(step, 300);
+        }
+        setTimeout(step, 400);
     }
 
     function isOverGrid(x, y) {
@@ -259,17 +345,25 @@ var GameEngine = (function () {
         if (old) {
             old.classList.remove('slot--robot');
             old.classList.add('slot--visited');
-            old.querySelector('.slot__label').textContent = moveHistory.length;
+            if (isFreeRoam()) {
+                // Di freeRoam cell bisa kembali bersih kalau nanti robot datang lagi
+                old.querySelector('.slot__label').textContent = '';
+            } else {
+                old.querySelector('.slot__label').textContent = moveHistory.length;
+            }
         }
         robotPos = { row: r, col: c };
         var ns = slotEl(r, c);
         if (ns) {
+            ns.classList.remove('slot--visited');
             ns.classList.add('slot--robot');
             ns.querySelector('.slot__label').textContent = cfg.robotEmoji;
             ns.classList.add('slot--snap');
             setTimeout(function () { ns.classList.remove('slot--snap'); }, 250);
 
-            if (ns.dataset.cp) {
+            var cpKey = r + ',' + c;
+            if (ns.dataset.cp && !visitedCheckpoints[cpKey]) {
+                visitedCheckpoints[cpKey] = true;
                 ns.classList.add('slot--checkpoint-hit');
                 playSound('checkpoint');
                 playClapFile();
@@ -283,10 +377,25 @@ var GameEngine = (function () {
             }
         }
 
-        var ctr = canvasEl.querySelector('#moveCount');
-        if (ctr) ctr.textContent = moveHistory.length + ' / ' + stageData.answerKey.length;
+        updateMoveCounter();
         updateMoveLog();
         if (onStageUpdate) onStageUpdate(stageIdx, GameConfig.getStageCount(currentLevel));
+    }
+
+    function updateMoveCounter() {
+        var ctr = canvasEl.querySelector('#moveCount');
+        if (!ctr) return;
+        if (isFreeRoam()) {
+            var mx0 = stageData.maxMoves;
+            ctr.textContent = (mx0 - manualMoveCount);
+            return;
+        }
+        if (stageData.obstacles && stageData.obstacles.length > 0) {
+            var mx = stageData.maxMoves || stageData.answerKey.length;
+            ctr.textContent = (mx - moveHistory.length);
+        } else {
+            ctr.textContent = moveHistory.length + ' / ' + stageData.answerKey.length;
+        }
     }
 
     function updateMoveLog() {
@@ -374,6 +483,35 @@ var GameEngine = (function () {
     // ── Validation ──
 
     function checkDone() {
+        // FreeRoam mode: cek posisi robot = goal, semua checkpoint terlewati
+        if (isFreeRoam()) {
+            var gp = stageData.goalPos;
+            var atGoal = (robotPos.row === gp.row && robotPos.col === gp.col);
+            var allCpVisited = true;
+            if (stageData.checkpoints) {
+                for (var k = 0; k < stageData.checkpoints.length; k++) {
+                    var cp = stageData.checkpoints[k];
+                    if (!visitedCheckpoints[cp.row + ',' + cp.col]) {
+                        allCpVisited = false;
+                        break;
+                    }
+                }
+            }
+            if (atGoal && allCpVisited) {
+                isPlaying = false;
+                setTimeout(function () { showFeedback(true); }, 400);
+                return;
+            }
+            // Cek batas langkah habis
+            var mx2 = stageData.maxMoves;
+            if (mx2 && manualMoveCount >= mx2) {
+                isPlaying = false;
+                setTimeout(showWrong, 300);
+            }
+            return;
+        }
+
+        // Path-based mode (Level 1)
         var key = stageData.answerKey;
         var last = moveHistory.length - 1;
 
@@ -385,6 +523,12 @@ var GameEngine = (function () {
         if (moveHistory.length >= key.length) {
             isPlaying = false;
             setTimeout(function () { showFeedback(true); }, 400);
+            return;
+        }
+        var mx = stageData.maxMoves;
+        if (mx && moveHistory.length >= mx) {
+            isPlaying = false;
+            setTimeout(showWrong, 300);
         }
     }
 
@@ -412,10 +556,58 @@ var GameEngine = (function () {
         if (audio) audio.volume = Math.min(1, dubVol);
         try { if (audio && dubVol > 0) audio.play(); } catch (e) {}
 
-        canvasEl.querySelector('#btnReady').addEventListener('click', stageData.debugMode ? startDebugPlay : startPlay);
+        var readyHandler = stageData.debugMode ? startDebugPlay : (needsBriefing() ? showBriefing : startPlay);
+        canvasEl.querySelector('#btnReady').addEventListener('click', readyHandler);
         canvasEl.querySelector('#btnListen').addEventListener('click', function () {
             if (audio) { audio.currentTime = 0; audio.play(); }
         });
+    }
+
+    /** Cek apakah stage butuh briefing (ada jebakan/batu/batas langkah) */
+    function needsBriefing() {
+        return !!(stageData.obstacles && stageData.obstacles.length) ||
+               !!(stageData.traps && stageData.traps.length) ||
+               !!stageData.maxMoves;
+    }
+
+    /** Popup penjelasan sebelum gameplay untuk stage dengan fitur khusus */
+    function showBriefing() {
+        var items = '';
+        if (stageData.obstacles && stageData.obstacles.length) {
+            items += '<li><span class="briefing__icon">\uD83E\uDEA8</span>'
+                  +  '<span><strong>Batu</strong> &mdash; tidak bisa dilewati, harus cari jalan lain</span></li>';
+        }
+        if (stageData.traps) {
+            var hasHelp = false, hasBad = false;
+            for (var i = 0; i < stageData.traps.length; i++) {
+                if (stageData.traps[i].type === 'help') hasHelp = true;
+                if (stageData.traps[i].type === 'bad') hasBad = true;
+            }
+            if (hasHelp) {
+                items += '<li><span class="briefing__icon">\uD83E\uDEE7</span>'
+                      +  '<span><strong>Gelembung Arus</strong> &mdash; bawa robot meluncur beberapa langkah, hemat langkahmu!</span></li>';
+            }
+            if (hasBad) {
+                items += '<li><span class="briefing__icon">\uD83C\uDF00</span>'
+                      +  '<span><strong>Pusaran</strong> &mdash; jangan dilewati! Robot akan tersedot dan harus mulai ulang</span></li>';
+            }
+        }
+        if (stageData.maxMoves) {
+            items += '<li><span class="briefing__icon">\uD83D\uDCCF</span>'
+                  +  '<span><strong>Batas langkah: ' + stageData.maxMoves + '</strong> &mdash; gunakan dengan bijak!</span></li>';
+        }
+
+        canvasEl.innerHTML =
+            '<div class="briefing">'
+            + '<div class="briefing__header">'
+            + '  <span class="briefing__badge">Perhatian!</span>'
+            + '  <h3 class="briefing__title">Di peta ini ada:</h3>'
+            + '</div>'
+            + '<ul class="briefing__list">' + items + '</ul>'
+            + '<button class="btn btn--play btn--play-yellow" id="btnBriefingGo">Mulai Petualangan \u2794</button>'
+            + '</div>';
+
+        canvasEl.querySelector('#btnBriefingGo').addEventListener('click', startPlay);
     }
 
 
@@ -424,16 +616,39 @@ var GameEngine = (function () {
     function startPlay() {
         robotPos = { row: stageData.startPos.row, col: stageData.startPos.col };
         moveHistory = [];
+        manualMoveCount = 0;
+        visitedCheckpoints = {};
         isPlaying = true;
         var n = stageIdx + 1, tot = GameConfig.getStageCount(currentLevel);
+        var freeMode = isFreeRoam();
+        var maxMv = stageData.maxMoves || (stageData.answerKey ? stageData.answerKey.length : 0);
+        var counterLabel, instruction;
+        if (freeMode) {
+            counterLabel = 'Sisa: <strong id="moveCount">' + maxMv + '</strong>';
+            var tips = '\u26A0\uFE0F Hindari batu \uD83E\uDEA8';
+            if (stageData.traps) {
+                var hasHelp = false, hasBad = false;
+                for (var ti = 0; ti < stageData.traps.length; ti++) {
+                    if (stageData.traps[ti].type === 'help') hasHelp = true;
+                    if (stageData.traps[ti].type === 'bad') hasBad = true;
+                }
+                if (hasHelp) tips += ', ambil \u26A1 untuk bantuan';
+                if (hasBad) tips += ', jauhi \uD83C\uDF00';
+            }
+            instruction = tips + '. Sampai ' + stageData.goalEmoji + ' dalam ' + maxMv + ' langkah!';
+        } else {
+            counterLabel = 'Langkah: <strong id="moveCount">0 / ' + stageData.answerKey.length + '</strong>';
+            instruction = '\uD83D\uDCA1 Tarik panah ke arah peta untuk gerakkan robot menuju ' + stageData.goalEmoji;
+        }
+        var hasObs = freeMode;
 
         canvasEl.innerHTML =
             '<div class="play-area">'
             + '<div class="play-area__header">'
             + '  <span class="play-area__stage">Tahap ' + n + '/' + tot + ' \u2014 ' + stageData.title + '</span>'
-            + '  <span class="play-area__moves">Langkah: <strong id="moveCount">0 / ' + stageData.answerKey.length + '</strong></span>'
+            + '  <span class="play-area__moves">' + counterLabel + '</span>'
             + '</div>'
-            + '<div class="play-area__instruction">\uD83D\uDCA1 Tarik panah ke arah peta untuk gerakkan robot menuju ' + stageData.goalEmoji + '</div>'
+            + '<div class="play-area__instruction' + (hasObs ? ' play-area__instruction--warn' : '') + '">' + instruction + '</div>'
             + gridHTML()
             + '<div class="move-log" id="moveLog"></div>'
             + arrowToolbarHTML()
@@ -664,6 +879,9 @@ var GameEngine = (function () {
     function undoStep() {
         if (moveHistory.length === 0) return;
 
+        // FreeRoam: undo = full reset (path dinamis, sulit track mundur)
+        if (isFreeRoam()) { resetGrid(); return; }
+
         var ov = canvasEl.querySelector('#feedbackOverlay');
         if (ov) ov.remove();
         isPlaying = true;
@@ -679,6 +897,7 @@ var GameEngine = (function () {
         }
 
         moveHistory.pop();
+        if (manualMoveCount > 0) manualMoveCount--;
 
         // Replay from start to find previous position
         var r = stageData.startPos.row, c = stageData.startPos.col;
@@ -704,13 +923,14 @@ var GameEngine = (function () {
             ns.querySelector('.slot__label').textContent = cfg.robotEmoji;
         }
 
-        var ctr = canvasEl.querySelector('#moveCount');
-        if (ctr) ctr.textContent = moveHistory.length + ' / ' + stageData.answerKey.length;
+        updateMoveCounter();
         updateMoveLog();
     }
 
     function resetGrid() {
         moveHistory = [];
+        manualMoveCount = 0;
+        visitedCheckpoints = {};
         isPlaying = true;
         var parent = gridEl.parentElement;
         var tmp = document.createElement('div');
@@ -718,8 +938,7 @@ var GameEngine = (function () {
         parent.replaceChild(tmp.firstChild, gridEl);
         gridEl = canvasEl.querySelector('#eGrid');
         robotPos = { row: stageData.startPos.row, col: stageData.startPos.col };
-        var ctr = canvasEl.querySelector('#moveCount');
-        if (ctr) ctr.textContent = '0 / ' + stageData.answerKey.length;
+        updateMoveCounter();
         updateMoveLog();
         var ov = canvasEl.querySelector('#feedbackOverlay');
         if (ov) ov.remove();

@@ -116,70 +116,110 @@ var GameConfig = (function () {
         icons: ['\uD83D\uDCA7', '\uD83C\uDFDE\uFE0F', '\uD83C\uDF0A'],
         stages: [
 
-            // T1: Air, 5 langkah, grid 4x3
-            // S(0,0) → d d r r r → G(2,3)
+            // T1: Air, grid 5x4, min path 9 langkah, maxMoves 10 (1 buffer)
+            // Robot harus zigzag lewat atas karena baris 3 banyak batu
             {
                 id: 'l2_t1', title: 'Air',
+                freeRoam: true,
                 goalEmoji: '\uD83D\uDCA7',
                 story: 'Air penting untuk kehidupan \uD83D\uDCA7',
-                gridCols: 4, gridRows: 3,
+                gridCols: 5, gridRows: 4,
                 startPos: { row: 0, col: 0 },
-                answerKey: ['down','down','right','right','right'],
+                goalPos:  { row: 3, col: 4 },
+                obstacles: [
+                    { row: 0, col: 1 }, { row: 0, col: 3 },
+                    { row: 1, col: 1 }, { row: 2, col: 3 },
+                    { row: 3, col: 1 }, { row: 3, col: 3 },
+                ],
+                maxMoves: 10,
                 audio: 'Dubbing/Tahap 1 - Air.wav',
             },
 
-            // T2: Sungai, 7 langkah, grid 5x3
-            // S(0,0) → r r d r r d l → G(2,3)
+            // T2: Sungai, grid 6x4
+            // Helper ⚡ di jalur tengah, bad 🌀 di (3,3) menghukum rute bawah yg tampak pendek
+            // Min dg helper: 6 manual. Min tanpa helper: 8. maxMoves: 8 (helper optional tapi save)
             {
                 id: 'l2_t2', title: 'Sungai',
+                freeRoam: true,
                 goalEmoji: '\uD83C\uDFDE\uFE0F',
                 story: 'Sungai adalah air yang mengalir \uD83C\uDFDE\uFE0F',
-                gridCols: 5, gridRows: 3,
+                gridCols: 6, gridRows: 4,
                 startPos: { row: 0, col: 0 },
-                answerKey: ['right','right','down','right','right','down','left'],
+                goalPos:  { row: 3, col: 5 },
+                obstacles: [
+                    { row: 1, col: 1 }, { row: 2, col: 4 }, { row: 3, col: 2 },
+                ],
+                traps: [
+                    { row: 1, col: 2, type: 'help', direction: 'right', distance: 2, emoji: '\uD83E\uDEE7' },
+                    { row: 0, col: 4, type: 'bad', emoji: '\uD83C\uDF00' },
+                ],
+                maxMoves: 8,
                 audio: 'Dubbing/Tahap 2 - Sungai.wav',
             },
 
-            // T3: Laut, 8 langkah, grid 5x5
-            // S(0,4) → l l d d l l d d → G(4,0)
+            // T3: Laut, grid 7x4
+            // Helper di tengah kasih boost 3 langkah. Bad 🌀 di (1,5) menghukum rute atas
+            // Min dg helper: 6 manual. maxMoves: 8 (wajib pakai helper)
             {
                 id: 'l2_t3', title: 'Laut',
+                freeRoam: true,
                 goalEmoji: '\uD83C\uDF0A',
                 story: 'Laut sangat luas \uD83C\uDF0A',
-                gridCols: 5, gridRows: 5,
-                startPos: { row: 0, col: 4 },
-                answerKey: ['left','left','down','down','left','left','down','down'],
+                gridCols: 7, gridRows: 4,
+                startPos: { row: 0, col: 0 },
+                goalPos:  { row: 3, col: 6 },
+                obstacles: [
+                    { row: 0, col: 4 }, { row: 1, col: 1 }, { row: 1, col: 3 },
+                    { row: 3, col: 0 }, { row: 3, col: 2 }, { row: 3, col: 4 },
+                ],
+                traps: [
+                    { row: 2, col: 2, type: 'help', direction: 'right', distance: 3, emoji: '\uD83E\uDEE7' },
+                    { row: 2, col: 6, type: 'bad', emoji: '\uD83C\uDF00' },
+                ],
+                maxMoves: 8,
                 audio: 'Dubbing/Tahap 3 - Laut.wav',
             },
 
-            // T4: Debug, 6 langkah, grid 4x3
-            // S(0,3) → l d d l l u → G(1,0)
+            // T4: Debug — tetap mode lama, path-based
             {
                 id: 'l2_t4', title: 'Perbaiki Jalan',
                 goalEmoji: '\uD83D\uDD27',
-                story: 'Ada yang salah di jalannya! Cari dan perbaiki panah yang salah!',
-                gridCols: 4, gridRows: 3,
-                startPos: { row: 0, col: 3 },
-                answerKey: ['left','down','down','left','left','up'],
+                story: 'Ada yang salah di jalan berliku ini! Cari dan perbaiki panah yang salah!',
+                gridCols: 4, gridRows: 4,
+                startPos: { row: 0, col: 0 },
+                answerKey: ['down','right','down','right','down','right'],
                 audio: 'Dubbing/Tahap 4 - Perbaiki Jalan.wav',
                 debugMode: true,
-                prefill: ['left','down','right','left','left','down'],
+                prefill: ['down','left','down','right','down','right'],
             },
 
-            // T5: Final, 12 langkah, grid 6x5
-            // S(0,0) → d d r r d d r r u u r u → G(1,5)
+            // T5: Final — rute jelas L-shape, kunjungi 3 checkpoint + goal
+            // Start kiri atas → turun ke 💧 → kanan sampai 🏞️ → kanan → naik lewat 🌊 → ke ⭐
+            // Obstacle memblok shortcut tengah. Bad 🌀 di (2,3) menghukum rute tengah
+            // Helper ⚡ di (4,0) right 3 lands tepat di 🏞️. Tanpa helper budget ga muat.
             {
                 id: 'l2_t5', title: 'Kunjungi Semua!',
+                freeRoam: true,
                 goalEmoji: '\uD83C\uDF1F',
                 story: 'Ayo kunjungi air, sungai, dan laut! \uD83D\uDCA7\uD83C\uDFDE\uFE0F\uD83C\uDF0A',
-                gridCols: 6, gridRows: 5,
+                gridCols: 7, gridRows: 5,
                 startPos: { row: 0, col: 0 },
-                answerKey: ['down','down','right','right','down','down','right','right','up','up','right','up'],
+                goalPos:  { row: 0, col: 6 },
+                obstacles: [
+                    { row: 0, col: 2 }, { row: 0, col: 3 },
+                    { row: 1, col: 1 }, { row: 1, col: 3 }, { row: 1, col: 5 },
+                    { row: 3, col: 1 }, { row: 3, col: 3 }, { row: 3, col: 5 },
+                ],
+                traps: [
+                    { row: 4, col: 0, type: 'help', direction: 'right', distance: 3, emoji: '\uD83E\uDEE7' },
+                    { row: 2, col: 3, type: 'bad', emoji: '\uD83C\uDF00' },
+                ],
+                maxMoves: 11,
                 audio: 'Dubbing/Tahap 5 - Kunjungi Semua.wav',
                 checkpoints: [
                     { row: 2, col: 0, emoji: '\uD83D\uDCA7' },
-                    { row: 4, col: 2, emoji: '\uD83C\uDFDE\uFE0F' },
-                    { row: 2, col: 4, emoji: '\uD83C\uDF0A' },
+                    { row: 4, col: 3, emoji: '\uD83C\uDFDE\uFE0F' },
+                    { row: 2, col: 6, emoji: '\uD83C\uDF0A' },
                 ],
             },
         ],
