@@ -180,17 +180,43 @@ var GameConfig = (function () {
                 audio: 'Dubbing/Tahap 3 - Laut.wav',
             },
 
-            // T4: Debug — tetap mode lama, path-based
+            // T4: Debug — path berkelok + batu + pusaran, 3 panah salah
+            // answerKey (benar): d r d r u r d r  → (0,0)→(1,0)→(1,1)→(2,1)→(2,2)→(1,2)→(1,3)→(2,3)→(2,4)
+            // Batu di (0,2),(2,0) memperjelas rute. Pusaran di (0,3) — kalau kid salah arah bisa masuk
+            // prefill (salah): d LEFT d r DOWN r UP r  → index 1, 4, 6 salah
+            // T4: Debug freeRoam-style
+            // answerKey benar: d r d r d r r  → manual 7 + boost 2 via gelembung di (2,3)
+            // Path: (0,0)→(1,0)→(1,1)→(2,1)→(2,2)→(3,2)→(3,3)helper[boost right 2]→(3,5)→(3,6)??
+            // Grid 5x3: (0,0)→(1,0)→(1,1)→(2,1)→(2,2)→?? terbatas.
+            // Pake grid 6x4:
+            // (0,0)→d(1,0)→r(1,1)→d(2,1)→r(2,2)→d(3,2)→r(3,3)HELPER[boost r 2]→(3,5) goal? need d then r?
+            // Sederhanakan: grid 6x3, (0,0)→r(0,1)→d(1,1)→r(1,2)HELPER[r 2]→(1,4)→d(2,4)→r(2,5)
+            // answerKey: r d r d r (5 manual + 2 boost dari helper di (1,2))
+            // T4 Debug freeRoam-style:
+            // - Grid 6x3 dengan batu, pusaran, gelembung helper
+            // - answerKey: r d r d r (5 manual) tapi robot jalan 7 langkah karena helper boost
+            // - Path benar: (0,0)→r(0,1)→d(1,1)→r(1,2)HELPER→boost (1,3)(1,4)→d(2,4)→r(2,5) 🛟
+            // - prefill 3 panah salah: tiap salah bikin fail berbeda (OOB/batu/pusaran/tak-sampai-goal)
             {
                 id: 'l2_t4', title: 'Perbaiki Jalan',
-                goalEmoji: '\uD83D\uDD27',
-                story: 'Ada yang salah di jalan berliku ini! Cari dan perbaiki panah yang salah!',
-                gridCols: 4, gridRows: 4,
+                goalEmoji: '\uD83D\uDEDF',
+                story: 'Ada 3 panah yang salah! Batu dan pusaran bisa menggagalkan robot, perbaiki arahnya.',
+                gridCols: 6, gridRows: 3,
                 startPos: { row: 0, col: 0 },
-                answerKey: ['down','right','down','right','down','right'],
+                goalPos:  { row: 2, col: 5 },
+                answerKey: ['right','down','right','down','right'],
+                obstacles: [
+                    { row: 0, col: 2 }, { row: 0, col: 4 },
+                    { row: 1, col: 5 }, { row: 2, col: 2 },
+                ],
+                traps: [
+                    { row: 1, col: 2, type: 'help', direction: 'right', distance: 2, emoji: '\uD83E\uDEE7' },
+                    { row: 1, col: 0, type: 'bad', emoji: '\uD83C\uDF00' },
+                    { row: 2, col: 1, type: 'bad', emoji: '\uD83C\uDF00' },
+                ],
                 audio: 'Dubbing/Tahap 4 - Perbaiki Jalan.wav',
                 debugMode: true,
-                prefill: ['down','left','down','right','down','right'],
+                prefill: ['right','up','left','down','up'],
             },
 
             // T5: Final — rute jelas L-shape, kunjungi 3 checkpoint + goal

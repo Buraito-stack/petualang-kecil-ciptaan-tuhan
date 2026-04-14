@@ -108,7 +108,9 @@ var GameEngine = (function () {
         if (!freeMode) buildPath();
         var cols = stageData.gridCols, rows = stageData.gridRows;
         var g = freeMode ? stageData.goalPos : goalPos();
-        var gridCls = 'grid' + (freeMode ? ' grid--freeroam' : '');
+        // Uniform render jika freeRoam atau debug mode dengan obstacles/traps
+        var uniform = freeMode || (stageData.debugMode && (stageData.obstacles || stageData.traps));
+        var gridCls = 'grid' + (uniform ? ' grid--freeroam' : '');
         var h = '<div class="' + gridCls + '" id="eGrid" style="grid-template-columns:repeat(' + cols + ',var(--cell));grid-template-rows:repeat(' + rows + ',var(--cell));">';
 
         for (var r = 0; r < rows; r++) {
@@ -121,7 +123,7 @@ var GameEngine = (function () {
                 var trap = getTrap(r, c);
 
                 var cls = 'slot'
-                    + (freeMode ? ' slot--open' : (onP ? ' slot--path' : ' slot--wall'))
+                    + (uniform ? ' slot--open' : (onP ? ' slot--path' : ' slot--wall'))
                     + (isObs ? ' slot--obstacle' : '')
                     + (trap ? ' slot--trap slot--trap-' + trap.type : '')
                     + (isS ? ' slot--start slot--robot' : '')
@@ -794,11 +796,23 @@ var GameEngine = (function () {
     function debugCek() {
         isPlaying = false;
 
-        // Clean grid before walk animation
+        // Clean grid before walk animation — restore label batu/pusaran/gelembung
         var allSlots = gridEl.querySelectorAll('.slot');
         for (var i = 0; i < allSlots.length; i++) {
-            allSlots[i].classList.remove('slot--robot', 'slot--visited', 'slot--wrong', 'slot--snap');
-            allSlots[i].querySelector('.slot__label').textContent = '';
+            var sl = allSlots[i];
+            sl.classList.remove('slot--robot', 'slot--visited', 'slot--wrong', 'slot--snap');
+            var lblEl = sl.querySelector('.slot__label');
+            if (sl.classList.contains('slot--obstacle')) {
+                lblEl.textContent = '\uD83E\uDEA8';
+                continue;
+            }
+            if (sl.classList.contains('slot--trap')) {
+                var rr = +sl.dataset.row, cc = +sl.dataset.col;
+                var trapHere2 = getTrap(rr, cc);
+                if (trapHere2) lblEl.textContent = trapHere2.emoji;
+                continue;
+            }
+            lblEl.textContent = '';
         }
 
         var startS = slotEl(stageData.startPos.row, stageData.startPos.col);
@@ -817,59 +831,115 @@ var GameEngine = (function () {
         var oldOv = canvasEl.querySelector('#feedbackOverlay');
         if (oldOv) oldOv.remove();
 
-        // Animated walk
         var r = stageData.startPos.row, c = stageData.startPos.col;
         var step = 0;
-        var allCorrect = true;
+
+        function markWrong(cell) {
+            if (cell) cell.classList.add('slot--wrong');
+            setTimeout(function () { showFeedback(false); }, 500);
+        }
+
+        function finish() {
+            var atGoal = (r === gp.row && c === gp.col);
+            setTimeout(function () { showFeedback(atGoal); }, 300);
+        }
+
+        function doBoost(dir, dist, onComplete) {
+            var bstep = 0;
+            function boostStep() {
+                if (bstep >= dist) { onComplete(); return; }
+                var bnr = r, bnc = c;
+                switch (dir) {
+                    case 'up': bnr--; break; case 'down': bnr++; break;
+                    case 'left': bnc--; break; case 'right': bnc++; break;
+                }
+                // Boost berhenti kalau OOB atau batu — lanjut ke arrow berikutnya
+                if (bnr < 0 || bnr >= stageData.gridRows || bnc < 0 || bnc >= stageData.gridCols) {
+                    onComplete(); return;
+                }
+                if (isObstacle(bnr, bnc)) { onComplete(); return; }
+                var oldB = slotEl(r, c);
+                if (oldB) { oldB.classList.remove('slot--robot'); oldB.classList.add('slot--visited'); oldB.querySelector('.slot__label').textContent = ''; }
+                r = bnr; c = bnc;
+                robotPos = { row: r, col: c };
+                var nsB = slotEl(r, c);
+                if (nsB) {
+                    nsB.classList.remove('slot--visited');
+                    nsB.classList.add('slot--robot');
+                    nsB.querySelector('.slot__label').textContent = cfg.robotEmoji;
+                    nsB.classList.add('slot--snap');
+                    setTimeout(function () { if (nsB) nsB.classList.remove('slot--snap'); }, 250);
+                }
+                bstep++;
+                setTimeout(boostStep, 280);
+            }
+            setTimeout(boostStep, 320);
+        }
 
         function walkNext() {
-            if (step >= moveHistory.length) {
-                setTimeout(function () { showFeedback(allCorrect); }, 300);
-                return;
-            }
+            if (step >= moveHistory.length) { finish(); return; }
 
             var dir = moveHistory[step];
-            if (!dir) { setTimeout(function () { showFeedback(false); }, 300); return; }
-            var correct = (dir === stageData.answerKey[step]);
+            if (!dir) { setTimeout(finish, 300); return; }
 
             var logStep = canvasEl.querySelector('.debug-step[data-idx="' + step + '"]');
-            if (logStep) logStep.classList.add(correct ? 'debug-step--ok' : 'debug-step--err');
-
-            var old = slotEl(r, c);
-            if (old) { old.classList.remove('slot--robot'); old.classList.add('slot--visited'); old.querySelector('.slot__label').textContent = (step + 1); }
+            if (logStep) logStep.classList.add('debug-step--ok');
 
             var nr = r, nc = c;
             switch (dir) { case 'up': nr--; break; case 'down': nr++; break; case 'left': nc--; break; case 'right': nc++; break; }
 
-            // Case Out of bounds = wrong
+            var old = slotEl(r, c);
+
+            // Out of bounds → tabrak dinding, fail
             if (nr < 0 || nr >= stageData.gridRows || nc < 0 || nc >= stageData.gridCols) {
-                allCorrect = false;
-                if (old) { old.classList.remove('slot--visited'); old.classList.add('slot--robot', 'slot--wrong'); old.querySelector('.slot__label').textContent = cfg.robotEmoji; }
-                setTimeout(function () { showFeedback(false); }, 500);
+                if (logStep) { logStep.classList.remove('debug-step--ok'); logStep.classList.add('debug-step--err'); }
+                if (old) old.classList.add('slot--wrong');
+                markWrong(old);
                 return;
             }
 
+            // Batu → tabrak, fail
+            if (isObstacle(nr, nc)) {
+                if (logStep) { logStep.classList.remove('debug-step--ok'); logStep.classList.add('debug-step--err'); }
+                if (old) old.classList.add('slot--wrong');
+                markWrong(old);
+                return;
+            }
+
+            // Pindah ke cell baru
+            if (old) { old.classList.remove('slot--robot'); old.classList.add('slot--visited'); old.querySelector('.slot__label').textContent = (step + 1); }
             r = nr; c = nc;
             robotPos = { row: r, col: c };
-
             var ns = slotEl(r, c);
             if (ns) {
+                ns.classList.remove('slot--visited');
                 ns.classList.add('slot--robot');
                 ns.querySelector('.slot__label').textContent = cfg.robotEmoji;
                 ns.classList.add('slot--snap');
                 setTimeout(function () { if (ns) ns.classList.remove('slot--snap'); }, 250);
             }
 
-            if (!correct) {
-                allCorrect = false;
+            // Pusaran → fail
+            var trapHere = getTrap(r, c);
+            if (trapHere && trapHere.type === 'bad') {
+                if (logStep) { logStep.classList.remove('debug-step--ok'); logStep.classList.add('debug-step--err'); }
                 if (ns) ns.classList.add('slot--wrong');
-                setTimeout(function () { showFeedback(false); }, 500);
+                playSound('step');
+                markWrong(ns);
                 return;
             }
 
+            // Sound feedback
             if (ns && ns.dataset.cp) { playSound('checkpoint'); playClapFile(); showCheckpointToast(ns.dataset.cp, 'Berhasil menemukan'); }
             else if (ns && ns.classList.contains('slot--goal')) { playSound('goal'); playClapFile(); showCheckpointToast(stageData.goalEmoji, 'Sampai di'); }
             else { playSound('step'); }
+
+            // Helper (gelembung) → auto boost lalu lanjut arrow berikutnya
+            if (trapHere && trapHere.type === 'help') {
+                step++;
+                doBoost(trapHere.direction, trapHere.distance, function () { setTimeout(walkNext, 300); });
+                return;
+            }
 
             step++;
             setTimeout(walkNext, 350);
