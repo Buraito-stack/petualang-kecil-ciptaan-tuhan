@@ -12,6 +12,7 @@ var GameEngine = (function () {
     var stageData   = null;
     var robotPos    = null;
     var moveHistory = [];
+    var moveKinds   = []; // 'manual' | 'bonus' — sejajar dg moveHistory
     var manualMoveCount = 0;
     var visitedCheckpoints = {};
     var pathCells   = null;
@@ -269,6 +270,7 @@ var GameEngine = (function () {
             return;
         }
         moveHistory.push(dir);
+        moveKinds.push('manual');
         manualMoveCount++;
         var dr = +dest.dataset.row, dc = +dest.dataset.col;
         snapTo(dr, dc);
@@ -307,6 +309,7 @@ var GameEngine = (function () {
                 return;
             }
             moveHistory.push(dir);
+            moveKinds.push('bonus');
             // Tidak increment manualMoveCount — ini bonus gratis
             snapTo(+d.dataset.row, +d.dataset.col);
             i++;
@@ -616,6 +619,7 @@ var GameEngine = (function () {
     function startPlay() {
         robotPos = { row: stageData.startPos.row, col: stageData.startPos.col };
         moveHistory = [];
+        moveKinds = [];
         manualMoveCount = 0;
         visitedCheckpoints = {};
         isPlaying = true;
@@ -879,11 +883,67 @@ var GameEngine = (function () {
     function undoStep() {
         if (moveHistory.length === 0) return;
 
-        // FreeRoam: undo = full reset (path dinamis, sulit track mundur)
-        if (isFreeRoam()) { resetGrid(); return; }
-
         var ov = canvasEl.querySelector('#feedbackOverlay');
         if (ov) ov.remove();
+
+        // FreeRoam: pop hingga dan termasuk move manual terakhir, lalu rebuild
+        if (isFreeRoam()) {
+            var poppedManual = false;
+            while (moveHistory.length > 0) {
+                var kind = moveKinds.pop();
+                moveHistory.pop();
+                if (kind === 'manual') {
+                    manualMoveCount--;
+                    poppedManual = true;
+                    break;
+                }
+            }
+            if (!poppedManual) return;
+
+            // Rebuild grid dari nol
+            var parent = gridEl.parentElement;
+            var tmp = document.createElement('div');
+            tmp.innerHTML = gridHTML();
+            parent.replaceChild(tmp.firstChild, gridEl);
+            gridEl = canvasEl.querySelector('#eGrid');
+
+            // Replay moveHistory sisa untuk posisi + checkpoint
+            visitedCheckpoints = {};
+            var rr = stageData.startPos.row, cc = stageData.startPos.col;
+            var startEl = slotEl(rr, cc);
+            if (startEl) {
+                startEl.classList.remove('slot--robot');
+                startEl.querySelector('.slot__label').textContent = '';
+            }
+            for (var mi = 0; mi < moveHistory.length; mi++) {
+                var oldCellEl = slotEl(rr, cc);
+                if (oldCellEl) {
+                    oldCellEl.classList.add('slot--visited');
+                }
+                switch (moveHistory[mi]) {
+                    case 'up': rr--; break; case 'down': rr++; break;
+                    case 'left': cc--; break; case 'right': cc++; break;
+                }
+                var cpEmojiHere = getCheckpointEmoji(rr, cc);
+                if (cpEmojiHere) {
+                    visitedCheckpoints[rr + ',' + cc] = true;
+                    var cpCellEl = slotEl(rr, cc);
+                    if (cpCellEl) cpCellEl.classList.add('slot--checkpoint-hit');
+                }
+            }
+            robotPos = { row: rr, col: cc };
+            var finalEl = slotEl(rr, cc);
+            if (finalEl) {
+                finalEl.classList.remove('slot--visited');
+                finalEl.classList.add('slot--robot');
+                finalEl.querySelector('.slot__label').textContent = cfg.robotEmoji;
+            }
+            isPlaying = true;
+            updateMoveCounter();
+            updateMoveLog();
+            return;
+        }
+
         isPlaying = true;
 
         var cur = slotEl(robotPos.row, robotPos.col);
@@ -929,6 +989,7 @@ var GameEngine = (function () {
 
     function resetGrid() {
         moveHistory = [];
+        moveKinds = [];
         manualMoveCount = 0;
         visitedCheckpoints = {};
         isPlaying = true;
