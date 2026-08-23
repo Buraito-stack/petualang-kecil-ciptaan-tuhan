@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Kisah Petualangan Nabi Elia</title>
+  <style>
+    :root {
+      --primary: #FF7043;
+      --primary-dark: #D84315;
+      --accent: #FFCA28;
+      --sky-day: #81D4FA;
+      --sky-drought: #FFE082;
+      --sky-sunset: #FFAB91;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #1e272e;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    #game-container {
+      width: 100%;
+      max-width: 540px;
+      background: white;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+    }
+    /* Top Header */
+    .header-bar {
+      padding: 12px 18px;
+      background: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #F1F2F6;
+    }
+    .badge {
+      background: #FFEAA7;
+      color: #D35400;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 5px 12px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+    }
+    .verse-tag {
+      font-size: 12px;
+      color: #747D8C;
+      font-weight: 700;
+    }
+    /* Viewport Stage */
+    #stage {
+      position: relative;
+      width: 100%;
+      height: 350px;
+      background: var(--sky-drought);
+      overflow: hidden;
+      transition: background 0.8s ease;
+    }
+    .sun {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      width: 55px;
+      height: 55px;
+      background: #FFA000;
+      border-radius: 50%;
+      box-shadow: 0 0 35px #FFD54F;
+      transition: all 0.8s ease;
+    }
+    .clouds {
+      position: absolute;
+      top: 25px;
+      left: 8%;
+      opacity: 0.8;
+      animation: floatCloud 18s infinite linear alternate;
+    }
+    @keyframes floatCloud {
+      from { transform: translateX(0); }
+      to { transform: translateX(110px); }
+    }
+    /* SVG Terrains */
+    .terrain-svg {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+    }
+    /* Characters Layer */
+    .character {
+      position: absolute;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), left 0.6s ease, bottom 0.6s ease, opacity 0.4s ease;
+      cursor: pointer;
+    }
+    .character svg {
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,0.15));
+    }
+    /* Actor Positions */
+    #char-ahab {
+      bottom: 50px;
+      left: 10%;
+      z-index: 8;
+    }
+    #char-jezebel {
+      bottom: 50px;
+      left: 28%;
+      z-index: 8;
+    }
+    #char-baal-idol {
+      bottom: 55px;
+      left: 2%;
+      z-index: 7;
+      cursor: pointer;
+    }
+    #char-elijah {
+      bottom: 50px;
+      left: 68%;
+      z-index: 10;
+    }
+    #char-crow {
+      top: 25px;
+      left: 65%;
+      z-index: 15;
+      display: none;
+      animation: flapFlight 3s infinite alternate ease-in-out;
+    }
+    @keyframes flapFlight {
+      0% { transform: translate(0, 0) scaleX(1); }
+      50% { transform: translate(-25px, 12px) scaleX(1); }
+      100% { transform: translate(25px, -8px) scaleX(-1); }
+    }
+    /* Floating Items & FX */
+    .flying-bread {
+      position: absolute;
+      z-index: 25;
+      font-size: 34px;
+      pointer-events: none;
+      transition: all 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .pop-fx {
+      position: absolute;
+      background: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+      animation: popUp 0.8s forwards;
+      pointer-events: none;
+      z-index: 30;
+      white-space: nowrap;
+    }
+    @keyframes popUp {
+      0% { opacity: 0; transform: translateY(0) scale(0.5); }
+      50% { opacity: 1; transform: translateY(-20px) scale(1.1); }
+      100% { opacity: 0; transform: translateY(-40px) scale(1); }
+    }
+    /* Story Content Card */
+    .story-card {
+      padding: 20px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .story-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: #2F3542;
+    }
+    .story-text {
+      font-size: 15px;
+      line-height: 1.55;
+      color: #57606F;
+      min-height: 65px;
+    }
+    .story-text strong {
+      color: var(--primary-dark);
+    }
+    /* Meter Box */
+    .meter-container {
+      background: #F1F2F6;
+      border-radius: 10px;
+      height: 14px;
+      width: 100%;
+      overflow: hidden;
+      display: none;
+      margin-bottom: 4px;
+    }
+    .meter-fill {
+      background: linear-gradient(90deg, #FF9F43, #EE5253);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    /* Controls */
+    .btn-action {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      font-size: 17px;
+      font-weight: 800;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 var(--primary-dark);
+      transition: transform 0.1s ease;
+    }
+    .btn-action:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 var(--primary-dark);
+    }
+    .btn-done {
+      background: #2ED573;
+      box-shadow: 0 6px 0 #26AF5F;
+    }
+    .btn-done:active {
+      box-shadow: 0 2px 0 #26AF5F;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <!-- Header Bar -->
+  <div class="header-bar">
+    <div class="badge" id="act-badge">Babak 1: Peringatan</div>
+    <div class="verse-tag">1 Raja Raja 17:1-6</div>
+  </div>
+
+  <!-- Main Viewport -->
+  <div id="stage">
+    <div class="sun" id="sun-element"></div>
+    <div class="clouds" id="cloud-element">
+      <svg width="100" height="40" viewBox="0 0 100 40" fill="white">
+        <path d="M 20,35 Q 10,35 10,25 Q 10,15 25,15 Q 35,5 50,10 Q 65,5 75,15 Q 90,15 90,25 Q 90,35 80,35 Z"/>
+      </svg>
+    </div>
+
+    <div id="scenery-container"></div>
+
+    <!-- Patung Baal -->
+    <div id="char-baal-idol" class="character" onclick="clickBaal()">
+      <svg width="55" height="110" viewBox="0 0 60 120">
+        <!-- Alas Mezbah Batu -->
+        <rect x="5" y="85" width="50" height="30" fill="#7F8C8D" rx="4"/>
+        <rect x="10" y="75" width="40" height="15" fill="#95A5A6" rx="2"/>
+        <!-- Patung Baal Emas / Tanduk Banteng -->
+        <circle cx="30" cy="40" r="14" fill="#F1C40F"/>
+        <path d="M 16,35 Q 10,18 22,25" stroke="#F39C12" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M 44,35 Q 50,18 38,25" stroke="#F39C12" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- Badan Patung -->
+        <rect x="22" y="52" width="16" height="25" fill="#F1C40F"/>
+        <circle cx="26" cy="40" r="2" fill="#7F8C8D"/>
+        <circle cx="34" cy="40" r="2" fill="#7F8C8D"/>
+      </svg>
+    </div>
+
+    <!-- Raja Ahab -->
+    <div id="char-ahab" class="character" onclick="playAhabVoice()">
+      <svg width="85" height="120" viewBox="0 0 100 130">
+        <!-- Mahkota Emas -->
+        <polygon points="35,15 45,5 55,15 65,5 75,15 75,25 35,25" fill="#FFD700" stroke="#B8860B" stroke-width="2"/>
+        <circle cx="55" cy="18" r="3" fill="#E74C3C"/>
+        <!-- Kepala -->
+        <circle cx="55" cy="40" r="18" fill="#F5CDA7"/>
+        <!-- Jenggot Hitam Garang -->
+        <path d="M 37,38 Q 37,60 55,60 Q 73,60 73,38" fill="#2C3A47"/>
+        <!-- Wajah Marah -->
+        <line x1="45" y1="33" x2="52" y2="37" stroke="#2C3A47" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="65" y1="33" x2="58" y2="37" stroke="#2C3A47" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="49" cy="40" r="2" fill="#2C3A47"/>
+        <circle cx="61" cy="40" r="2" fill="#2C3A47"/>
+        <!-- Jubah Raja Ungu -->
+        <path d="M 35,55 L 75,55 L 85,115 L 25,115 Z" fill="#6C5CE7"/>
+        <path d="M 47,55 L 63,55 L 63,115 L 47,115 Z" fill="#A29BFE"/>
+      </svg>
+    </div>
+
+    <!-- Ratu Izebel -->
+    <div id="char-jezebel" class="character" onclick="playJezebelVoice()">
+      <svg width="80" height="120" viewBox="0 0 100 130">
+        <!-- Mahkota Ratu / Tiara -->
+        <polygon points="38,20 45,10 50,22 55,10 62,20" fill="#FFD700" stroke="#E67E22" stroke-width="1.5"/>
+        <!-- Rambut Panjang Bergelombang -->
+        <path d="M 32,32 Q 25,65 30,85 Q 50,30 50,30 Q 50,30 70,85 Q 75,65 68,32 Z" fill="#2D3436"/>
+        <!-- Wajah Cantik tapi Galak -->
+        <circle cx="50" cy="40" r="16" fill="#FAD390"/>
+        <line x1="42" y1="35" x2="47" y2="38" stroke="#2D3436" stroke-width="2" stroke-linecap="round"/>
+        <line x1="58" y1="35" x2="53" y2="38" stroke="#2D3436" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="44" cy="40" r="2" fill="#2D3436"/>
+        <circle cx="56" cy="40" r="2" fill="#2D3436"/>
+        <path d="M 46,47 Q 50,45 54,47" stroke="#D63031" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- Gaun Mewah Ratu Merah / Emas -->
+        <path d="M 35,54 L 65,54 L 78,115 L 22,115 Z" fill="#E84393"/>
+        <path d="M 45,54 L 55,54 L 60,115 L 40,115 Z" fill="#FDCB6E"/>
+      </svg>
+    </div>
+
+    <!-- Nabi Elia -->
+    <div id="char-elijah" class="character" onclick="playElijahVoice()">
+      <svg width="85" height="120" viewBox="0 0 100 130">
+        <!-- Kepala -->
+        <circle cx="50" cy="38" r="17" fill="#ECC5A8"/>
+        <!-- Jenggot Nabi Abu-Abu -->
+        <path d="M 34,35 Q 32,68 50,68 Q 68,68 66,35" fill="#747D8C"/>
+        <!-- Wajah Ramah & Berani -->
+        <circle cx="44" cy="36" r="2.5" fill="#2F3542"/>
+        <circle cx="56" cy="36" r="2.5" fill="#2F3542"/>
+        <path d="M 45,46 Q 50,50 55,46" stroke="#2F3542" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- Sorban Kain -->
+        <path d="M 32,32 Q 50,16 68,32 Q 50,24 32,32" fill="#A4B0BE"/>
+        <!-- Jubah Kulit Sederhana -->
+        <path d="M 32,52 L 68,52 L 78,115 L 22,115 Z" fill="#A0522D"/>
+        <!-- Selendang Bulu -->
+        <path d="M 36,52 L 48,115 L 58,115 L 44,52 Z" fill="#CD853F"/>
+        <!-- Tongkat Gembala Kayu -->
+        <line x1="74" y1="30" x2="78" y2="120" stroke="#5D4037" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- Burung Gagak -->
+    <div id="char-crow" class="character" onclick="interactFeed()">
+      <svg width="70" height="60" viewBox="0 0 80 70">
+        <ellipse cx="45" cy="38" rx="20" ry="14" fill="#1E272E"/>
+        <path d="M 30,35 Q 45,10 60,30 Q 45,35 30,35" fill="#2F3542"/>
+        <circle cx="28" cy="30" r="10" fill="#1E272E"/>
+        <circle cx="25" cy="28" r="2.5" fill="#FFF"/>
+        <circle cx="24" cy="28" r="1" fill="#000"/>
+        <polygon points="20,28 8,34 20,38" fill="#FFA502"/>
+        <polygon points="62,35 78,30 74,42" fill="#1E272E"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Narrative & Story Controls -->
+  <div class="story-card">
+    <div class="story-title" id="story-heading">Peringatan Kepada Raja & Ratu</div>
+    <div class="story-text" id="story-desc">Memuat kisah Alkitab...</div>
+
+    <div class="meter-container" id="feed-meter-box">
+      <div class="meter-fill" id="feed-meter"></div>
+    </div>
+
+    <button class="btn-action" id="main-btn" onclick="handleButtonClick()">Lanjutkan Cerita ➔</button>
+  </div>
+</div>
+
+<script>
+  let currentStep = 0;
+  let foodGiven = 0;
+  let elijahWalkCount = 0;
+  const maxFeed = 3;
+
+  // Sound Synthesizer via Web Audio API
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  
+  function playTone(freq, type = 'sine', duration = 0.15) {
+    try {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  function playCrowChirp() {
+    playTone(900, 'sawtooth', 0.08);
+    setTimeout(() => playTone(700, 'sawtooth', 0.12), 90);
+  }
+
+  function playWaterDrop() {
+    playTone(1100, 'sine', 0.06);
+    setTimeout(() => playTone(1500, 'sine', 0.08), 50);
+  }
+
+  function playThunder() {
+    playTone(120, 'sawtooth', 0.4);
+    setTimeout(() => playTone(80, 'square', 0.3), 100);
+  }
+
+  function playElijahVoice() {
+    createPopFx(document.getElementById('char-elijah'), 'Tuhan Adalah Allah!');
+    playTone(340, 'triangle', 0.2);
+  }
+
+  function playAhabVoice() {
+    createPopFx(document.getElementById('char-ahab'), 'Kami Sembah Baal!');
+    playTone(180, 'sawtooth', 0.25);
+  }
+
+  function playJezebelVoice() {
+    createPopFx(document.getElementById('char-jezebel'), 'Baal Yang Berkuasa!');
+    playTone(520, 'sawtooth', 0.2);
+  }
+
+  function clickBaal() {
+    createPopFx(document.getElementById('char-baal-idol'), '... Patung Tak Bersuara ...');
+    playTone(150, 'sine', 0.1);
+  }
+
+  // Visual Scenery Environments
+  function setEnvironment(type) {
+    const stage = document.getElementById('stage');
+    const scenery = document.getElementById('scenery-container');
+    const sun = document.getElementById('sun-element');
+
+    if (type === 'palace') {
+      stage.style.background = 'var(--sky-drought)';
+      sun.style.boxShadow = '0 0 45px #FF6F00';
+      scenery.innerHTML = `
+        <svg class="terrain-svg" viewBox="0 0 500 120" preserveAspectRatio="none">
+          <rect y="70" width="500" height="50" fill="#D7CCC8"/>
+          <rect x="60" y="0" width="28" height="80" fill="#BCAAA4" opacity="0.4"/>
+          <rect x="180" y="0" width="28" height="80" fill="#BCAAA4" opacity="0.4"/>
+          <rect x="420" y="0" width="28" height="80" fill="#BCAAA4" opacity="0.4"/>
+        </svg>
+      `;
+    } else if (type === 'desert') {
+      stage.style.background = 'var(--sky-sunset)';
+      sun.style.boxShadow = '0 0 35px #FF5722';
+      scenery.innerHTML = `
+        <svg class="terrain-svg" viewBox="0 0 500 120" preserveAspectRatio="none">
+          <path d="M 0,80 Q 150,45 300,85 Q 420,55 500,80 L 500,120 L 0,120 Z" fill="#EDBB99"/>
+          <path d="M 0,95 Q 120,70 260,105 Q 400,75 500,95 L 500,120 L 0,120 Z" fill="#DC7633"/>
+        </svg>
+      `;
+    } else if (type === 'brook') {
+      stage.style.background = 'var(--sky-day)';
+      sun.style.boxShadow = '0 0 25px #FFD54F';
+      scenery.innerHTML = `
+        <svg class="terrain-svg" viewBox="0 0 500 140" preserveAspectRatio="none">
+          <path d="M 0,80 Q 90,40 180,90 Q 320,30 500,85 L 500,140 L 0,140 Z" fill="#8D6E63"/>
+          <path d="M 0,95 Q 120,65 240,105 Q 380,60 500,100 L 500,140 L 0,140 Z" fill="#6D4C41"/>
+          <path d="M 0,115 Q 130,100 250,118 Q 380,102 500,115 L 500,140 L 0,140 Z" fill="#29B6F6"/>
+          <path d="M 0,126 Q 140,118 260,128 Q 390,115 500,125 L 500,140 L 0,140 Z" fill="#0288D1"/>
+        </svg>
+      `;
+    }
+  }
+
+  // 4 Story Stages
+  const stages = [
+    {
+      badge: "Babak 1: Peringatan Kemarau",
+      title: "Raja Ahab, Ratu Izebel, & Nabi Elia",
+      desc: "Raja Ahab dan Ratu Izebel menyembah patung dewa Baal. Nabi Elia datang dan berkata tegas: <strong>'Demi Tuhan, tidak akan ada hujan atau embun bertahun-tahun!'</strong>",
+      btnText: "Elia Menyampaikan Pesan Tuhan ➔",
+      init: () => {
+        setEnvironment('palace');
+        document.getElementById('char-baal-idol').style.display = 'block';
+        document.getElementById('char-ahab').style.display = 'block';
+        document.getElementById('char-jezebel').style.display = 'block';
+        document.getElementById('char-crow').style.display = 'none';
+        
+        document.getElementById('char-ahab').style.left = '12%';
+        document.getElementById('char-jezebel').style.left = '32%';
+        document.getElementById('char-elijah').style.left = '70%';
+        document.getElementById('char-elijah').style.display = 'block';
+        document.getElementById('feed-meter-box').style.display = 'none';
+      }
+    },
+    {
+      badge: "Babak 2: Perjalanan Mengungsi",
+      title: "Tuhan Memerintahkan Elia Bersembunyi",
+      desc: "Raja Ahab dan Ratu Izebel sangat marah. Tuhan berkata: <strong>'Pergilah ke timur dan bersembunyilah di tepi Sungai Kerit.'</strong> Ketuk tombol untuk membantu Elia berjalan!",
+      btnText: "Langkah Kaki Elia (0/3) 🚶",
+      init: () => {
+        setEnvironment('desert');
+        elijahWalkCount = 0;
+        document.getElementById('char-baal-idol').style.display = 'none';
+        document.getElementById('char-ahab').style.display = 'none';
+        document.getElementById('char-jezebel').style.display = 'none';
+        document.getElementById('char-crow').style.display = 'none';
+        
+        const elijah = document.getElementById('char-elijah');
+        elijah.style.left = '10%';
+        elijah.style.display = 'block';
+        document.getElementById('feed-meter-box').style.display = 'none';
+      }
+    },
+    {
+      badge: "Babak 3: Sungai Kerit",
+      title: "Burung Gagak Membawa Makanan",
+      desc: "Elia sampai di tepi Sungai Kerit yang sejuk. Tuhan mengutus <strong>burung gagak</strong> setiap pagi dan petang! Ketuk Burung Gagak untuk memberi makan Elia.",
+      btnText: "Kirim Roti & Daging (0/3) 🍞",
+      init: () => {
+        setEnvironment('brook');
+        foodGiven = 0;
+        document.getElementById('char-baal-idol').style.display = 'none';
+        document.getElementById('char-ahab').style.display = 'none';
+        document.getElementById('char-jezebel').style.display = 'none';
+        document.getElementById('char-crow').style.display = 'block';
+        
+        const elijah = document.getElementById('char-elijah');
+        elijah.style.left = '45%';
+        elijah.style.display = 'block';
+        
+        document.getElementById('feed-meter-box').style.display = 'block';
+        updateMeter();
+      }
+    },
+    {
+      badge: "Babak 4: Kesimpulan & Sukacita",
+      title: "Tuhan Setia Memelihara Kita",
+      desc: "Elia minum air sungai dan makan makanan dari burung gagak. Patung Baal tidak berdaya, tetapi <strong>Tuhan yang hidup selalu memelihara anak-anak-Nya yang taat!</strong>",
+      btnText: "Mainkan Cerita Dari Awal ↺",
+      init: () => {
+        document.getElementById('feed-meter-box').style.display = 'none';
+        document.getElementById('main-btn').classList.add('btn-done');
+      }
+    }
+  ];
+
+  function renderStage(idx) {
+    currentStep = idx;
+    const stage = stages[idx];
+    document.getElementById('act-badge').textContent = stage.badge;
+    document.getElementById('story-heading').textContent = stage.title;
+    document.getElementById('story-desc').innerHTML = stage.desc;
+    document.getElementById('main-btn').textContent = stage.btnText;
+    document.getElementById('main-btn').classList.remove('btn-done');
+    stage.init();
+  }
+
+  function handleButtonClick() {
+    if (currentStep === 0) {
+      playThunder();
+      playElijahVoice();
+      setTimeout(() => renderStage(1), 600);
+    } else if (currentStep === 1) {
+      walkElijah();
+    } else if (currentStep === 2) {
+      interactFeed();
+    } else if (currentStep === 3) {
+      playTone(500, 'triangle', 0.2);
+      renderStage(0);
+    }
+  }
+
+  function walkElijah() {
+    if (elijahWalkCount < 3) {
+      elijahWalkCount++;
+      playTone(280 + (elijahWalkCount * 80), 'sine', 0.12);
+      
+      const elijah = document.getElementById('char-elijah');
+      const positions = ['25%', '50%', '80%'];
+      elijah.style.left = positions[elijahWalkCount - 1];
+      
+      elijah.style.transform = 'translateY(-15px) scale(1.1)';
+      setTimeout(() => { elijah.style.transform = 'translateY(0) scale(1)'; }, 200);
+
+      createPopFx(elijah, ['Langkah Taat!', 'Menuju Kerit...', 'Sampai di Sungai!'][elijahWalkCount - 1]);
+      document.getElementById('main-btn').textContent = `Langkah Kaki Elia (${elijahWalkCount}/3) 🚶`;
+
+      if (elijahWalkCount >= 3) {
+        setTimeout(() => {
+          playWaterDrop();
+          renderStage(2);
+        }, 700);
+      }
+    }
+  }
+
+  function interactFeed() {
+    if (currentStep !== 2) return;
+    if (foodGiven >= maxFeed) return;
+
+    playCrowChirp();
+
+    const crow = document.getElementById('char-crow');
+    const elijah = document.getElementById('char-elijah');
+    const stage = document.getElementById('stage');
+
+    const cBox = crow.getBoundingClientRect();
+    const eBox = elijah.getBoundingClientRect();
+    const sBox = stage.getBoundingClientRect();
+
+    const food = document.createElement('div');
+    food.className = 'flying-bread';
+    const items = ['🍞', '🥩', '🥖', '🍗'];
+    food.textContent = items[foodGiven % items.length];
+    food.style.left = `${cBox.left - sBox.left + 15}px`;
+    food.style.top = `${cBox.top - sBox.top + 25}px`;
+    stage.appendChild(food);
+
+    setTimeout(() => {
+      food.style.left = `${eBox.left - sBox.left + 25}px`;
+      food.style.top = `${eBox.top - sBox.top + 20}px`;
+      food.style.transform = 'scale(1.35)';
+    }, 30);
+
+    setTimeout(() => {
+      food.remove();
+      foodGiven++;
+      playTone(450 + (foodGiven * 120), 'sine', 0.2);
+
+      elijah.style.transform = 'translateX(-50%) scale(1.25)';
+      createPopFx(elijah, ['Nyam! Roti Pagi', 'Daging Lezat!', 'Puji Tuhan!'][foodGiven - 1]);
+      setTimeout(() => { elijah.style.transform = 'translateX(-50%) scale(1)'; }, 200);
+
+      updateMeter();
+
+      if (foodGiven < maxFeed) {
+        document.getElementById('main-btn').textContent = `Kirim Roti & Daging (${foodGiven}/${maxFeed}) 🍞`;
+      } else {
+        document.getElementById('main-btn').textContent = "Elia Kenyang & Bersyukur! ➔";
+        setTimeout(() => renderStage(3), 750);
+      }
+    }, 550);
+  }
+
+  function updateMeter() {
+    const pct = (foodGiven / maxFeed) * 100;
+    document.getElementById('feed-meter').style.width = `${pct}%`;
+  }
+
+  function createPopFx(targetElem, text) {
+    const stage = document.getElementById('stage');
+    const tBox = targetElem.getBoundingClientRect();
+    const sBox = stage.getBoundingClientRect();
+
+    const fx = document.createElement('div');
+    fx.className = 'pop-fx';
+    fx.textContent = text;
+    fx.style.left = `${tBox.left - sBox.left}px`;
+    fx.style.top = `${tBox.top - sBox.top - 18}px`;
+    stage.appendChild(fx);
+
+    setTimeout(() => fx.remove(), 850);
+  }
+
+  // Mulai game di awal
+  renderStage(0);
+</script>
+</body>
+</html>
